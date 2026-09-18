@@ -22,8 +22,31 @@
   .stat strong { color: #e6edf3; font-size: 16px; display: block; }
   .top-bar {
     background: #161b22; padding: 8px 24px; display: flex;
-    align-items: center; gap: 20px; border-bottom: 1px solid #30363d;
+    align-items: center; gap: 12px; border-bottom: 1px solid #30363d;
   }
+  .search-wrap { position: relative; display: flex; align-items: center; }
+  .search-wrap input {
+    background: #0d1117; color: #e6edf3; border: 1px solid #30363d;
+    border-radius: 6px; padding: 5px 10px 5px 28px; font-size: 12px;
+    width: 200px; outline: none; transition: border-color 0.2s;
+  }
+  .search-wrap input:focus { border-color: #58a6ff; }
+  .search-wrap input::placeholder { color: #484f58; }
+  .search-icon { position: absolute; left: 8px; top: 50%; transform: translateY(-50%); color: #484f58; font-size: 12px; pointer-events: none; }
+  .search-results {
+    position: absolute; top: 100%; left: 0; width: 280px;
+    background: #161b22; border: 1px solid #30363d; border-radius: 6px;
+    max-height: 240px; overflow-y: auto; z-index: 2000;
+    margin-top: 4px; display: none; box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  }
+  .search-results.open { display: block; }
+  .sr-item { padding: 8px 12px; cursor: pointer; border-bottom: 1px solid #21262d; display: flex; align-items: center; gap: 8px; }
+  .sr-item:last-child { border-bottom: none; }
+  .sr-item:hover { background: #21262d; }
+  .sr-item .sr-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .sr-item .sr-name { color: #e6edf3; font-size: 12px; font-weight: 600; }
+  .sr-item .sr-city { color: #8b949e; font-size: 11px; margin-left: auto; }
+  .sr-none { padding: 12px; color: #484f58; font-size: 12px; text-align: center; }
   .phase-filters { display: flex; gap: 6px; margin-left: auto; }
   .phase-btn {
     background: #21262d; color: #c9d1d9; border: 1px solid #30363d;
@@ -52,9 +75,8 @@
     font-size: 11px; font-weight: 600; color: #fff; margin-top: 4px;
   }
   .map-legend {
-    position: absolute; bottom: 24px; left: 24px; z-index: 1000;
-    background: rgba(13,17,23,0.92); border: 1px solid #30363d;
-    border-radius: 8px; padding: 12px 16px;
+    background: rgba(13,17,23,0.92) !important; border: 1px solid #30363d !important;
+    border-radius: 8px !important; padding: 12px 16px !important;
     font-family: 'Segoe UI', system-ui, sans-serif;
     color: #c9d1d9; font-size: 12px;
     backdrop-filter: blur(8px);
@@ -82,6 +104,11 @@
   </div>
 </div>
 <div class="top-bar">
+  <div class="search-wrap">
+    <span class="search-icon">&#128269;</span>
+    <input type="text" id="searchInput" placeholder="Search store # or city..." autocomplete="off" />
+    <div class="search-results" id="searchResults"></div>
+  </div>
   <div class="status-filters" id="statusFilters"></div>
   <div class="phase-filters">
     <button class="phase-btn active" onclick="filterPhase(0)">All</button>
@@ -92,9 +119,7 @@
     <button class="phase-btn" onclick="filterPhase(5)">Ph 5</button>
   </div>
 </div>
-<div id="map">
-  <div class="map-legend" id="mapLegend"></div>
-</div>
+<div id="map"></div>
 
 <script>
 var STORES = [{"n":"#391","c":"Lake Saint Louis, MO","p":1,"i":"08/31/26","st":"complete","lat":38.787,"lng":-90.78},{"n":"#264","c":"Florissant, MO","p":1,"i":"08/31/26","st":"complete","lat":38.789,"lng":-90.322},{"n":"#267","c":"O'Fallon, MO","p":1,"i":"09/01/26","st":"complete","lat":38.81,"lng":-90.7},{"n":"#296","c":"Alton, IL","p":1,"i":"09/01/26","st":"complete","lat":38.89,"lng":-90.184},{"n":"#222","c":"St Peters, MO","p":1,"i":"09/02/26","st":"complete","lat":38.8,"lng":-90.627},{"n":"#281","c":"Belleville, IL","p":1,"i":"09/02/26","st":"complete","lat":38.52,"lng":-89.984},{"n":"#237","c":"St Charles, MO","p":1,"i":"09/03/26","st":"complete","lat":38.784,"lng":-90.481},{"n":"#310","c":"Dupo, IL","p":1,"i":"09/03/26","st":"complete","lat":38.516,"lng":-90.211},{"n":"#366","c":"Herrin, IL","p":1,"i":"09/08/26","st":"complete","lat":37.803,"lng":-89.028},{"n":"#270","c":"Kirkwood, MO","p":1,"i":"09/08/26","st":"complete","lat":38.583,"lng":-90.407},{"n":"#343","c":"Waterloo, IL","p":1,"i":"09/09/26","st":"complete","lat":38.336,"lng":-90.15},{"n":"#239","c":"Herrin, IL","p":1,"i":"09/09/26","st":"complete","lat":37.803,"lng":-89.028},{"n":"#100","c":"Hannibal, MO","p":1,"i":"09/10/26","st":"complete","lat":39.708,"lng":-91.359},{"n":"#367","c":"Carterville, IL","p":1,"i":"09/10/26","st":"complete","lat":37.76,"lng":-89.077},{"n":"#351","c":"Salem, IL","p":1,"i":"09/11/26","st":"complete","lat":38.627,"lng":-88.946},{"n":"#161","c":"Marion, IL","p":1,"i":"09/11/26","st":"complete","lat":37.73,"lng":-88.933},{"n":"#134","c":"Mt Vernon, IL","p":1,"i":"09/14/26","st":"complete","lat":38.317,"lng":-88.903},{"n":"#344","c":"Carbondale, IL","p":1,"i":"09/14/26","st":"complete","lat":37.727,"lng":-89.217},{"n":"#259","c":"Mt Vernon, IL","p":1,"i":"09/15/26","st":"complete","lat":38.317,"lng":-88.903},{"n":"#51TC","c":"Mt Vernon, IL","p":1,"i":"09/16/26","st":"complete","lat":38.317,"lng":-88.903},{"n":"#247","c":"Marion, IL","p":1,"i":"09/16/26","st":"complete","lat":37.73,"lng":-88.933},{"n":"#388","c":"Marion, IL","p":1,"i":"09/16/26","st":"complete","lat":37.73,"lng":-88.933},{"n":"#349","c":"Mt Vernon, IL","p":1,"i":"09/18/26","st":"ready","lat":38.317,"lng":-88.903},{"n":"#379","c":"Marion, IL","p":1,"i":"09/18/26","st":"ready","lat":37.73,"lng":-88.933},{"n":"#177","c":"Harrisburg, IL","p":1,"i":"09/18/26","st":"complete","lat":37.738,"lng":-88.541},{"n":"#371","c":"Mt Vernon, IL","p":1,"i":"09/21/26","st":"ready","lat":38.317,"lng":-88.903},{"n":"#241","c":"Fairfield, IL","p":1,"i":"09/22/26","st":"ready","lat":38.379,"lng":-88.36},{"n":"#219","c":"Steeleville, IL","p":1,"i":"09/22/26","st":"ready","lat":38.006,"lng":-89.661},{"n":"#101","c":"Grayville, IL","p":1,"i":"09/23/26","st":"ready","lat":38.258,"lng":-87.994},{"n":"#114","c":"Christopher, IL","p":1,"i":"09/23/26","st":"ready","lat":37.973,"lng":-89.053},{"n":"#130","c":"Mcleansboro, IL","p":1,"i":"09/24/26","st":"ready","lat":38.093,"lng":-88.536},{"n":"#200","c":"Benton, IL","p":1,"i":"09/24/26","st":"ready","lat":38.007,"lng":-88.92},{"n":"#197","c":"Eldorado, IL","p":1,"i":"09/25/26","st":"ready","lat":37.813,"lng":-88.438},{"n":"#104","c":"W. Frankfort, IL","p":1,"i":"09/25/26","st":"ready","lat":37.898,"lng":-88.932},{"n":"#357","c":"Peoria, IL","p":2,"i":"09/28/26","st":"pending","lat":40.694,"lng":-89.589},{"n":"#111","c":"Metropolis, IL","p":2,"i":"09/28/26","st":"watch","lat":37.151,"lng":-88.732},{"n":"#249","c":"Peoria, IL","p":2,"i":"09/29/26","st":"pending","lat":40.694,"lng":-89.589},{"n":"#406","c":"Paducah, KY","p":2,"i":"09/29/26","st":"watch","lat":37.084,"lng":-88.6},{"n":"#260","c":"Peoria, IL","p":2,"i":"09/30/26","st":"pending","lat":40.694,"lng":-89.589},{"n":"#377","c":"Paducah, KY","p":2,"i":"09/30/26","st":"pending","lat":37.084,"lng":-88.6},{"n":"#358","c":"Peoria, IL","p":2,"i":"10/01/26","st":"pending","lat":40.694,"lng":-89.589},{"n":"#378","c":"Paducah, KY","p":2,"i":"10/01/26","st":"pending","lat":37.084,"lng":-88.6},{"n":"#188","c":"Eureka, IL","p":2,"i":"10/02/26","st":"pending","lat":40.721,"lng":-89.273},{"n":"#360","c":"Bloomington, IL","p":2,"i":"10/05/26","st":"pending","lat":40.484,"lng":-88.994},{"n":"#52TC","c":"Kuttawa, KY","p":2,"i":"10/05/26","st":"pending","lat":37.06,"lng":-88.113},{"n":"#355","c":"Bloomington, IL","p":2,"i":"10/06/26","st":"pending","lat":40.484,"lng":-88.994},{"n":"#401","c":"Mayfield, KY","p":2,"i":"10/06/26","st":"pending","lat":36.741,"lng":-88.637},{"n":"#186","c":"Heyworth, IL","p":2,"i":"10/07/26","st":"pending","lat":40.313,"lng":-88.974},{"n":"#376","c":"Murray, KY","p":2,"i":"10/07/26","st":"pending","lat":36.61,"lng":-88.315},{"n":"#54","c":"Farmers City, IL","p":2,"i":"10/08/26","st":"pending","lat":40.243,"lng":-88.642},{"n":"#393","c":"Murray, KY","p":2,"i":"10/08/26","st":"pending","lat":36.61,"lng":-88.315},{"n":"#287","c":"Decatur, IL","p":2,"i":"10/12/26","st":"pending","lat":39.84,"lng":-88.955},{"n":"#271","c":"Cape Girardeau, MO","p":2,"i":"10/12/26","st":"pending","lat":37.306,"lng":-89.519},{"n":"#173","c":"Mt Zion, IL","p":2,"i":"10/13/26","st":"pending","lat":39.773,"lng":-88.874},{"n":"#407","c":"Charleston, IL","p":2,"i":"10/14/26","st":"pending","lat":39.496,"lng":-88.176},{"n":"#265","c":"Poplar Bluff, MO","p":2,"i":"10/14/26","st":"pending","lat":36.757,"lng":-90.393},{"n":"#250","c":"Charleston, IL","p":2,"i":"10/15/26","st":"pending","lat":39.496,"lng":-88.176},{"n":"#321","c":"Kennett, MO","p":2,"i":"10/15/26","st":"pending","lat":36.236,"lng":-90.056},{"n":"#338","c":"Vincennes, IN","p":2,"i":"10/19/26","st":"pending","lat":38.677,"lng":-87.529},{"n":"#300","c":"Jackson, TN","p":2,"i":"10/19/26","st":"pending","lat":35.614,"lng":-88.814},{"n":"#135","c":"Vincennes, IN","p":2,"i":"10/20/26","st":"pending","lat":38.677,"lng":-87.529},{"n":"#303","c":"Jackson, TN","p":2,"i":"10/20/26","st":"pending","lat":35.614,"lng":-88.814},{"n":"#290","c":"Vincennes, IN","p":2,"i":"10/21/26","st":"pending","lat":38.677,"lng":-87.529},{"n":"#105","c":"Martin, TN","p":2,"i":"10/21/26","st":"pending","lat":36.343,"lng":-88.85},{"n":"#210","c":"Robinson, IL","p":2,"i":"10/22/26","st":"pending","lat":39.005,"lng":-87.739},{"n":"#308","c":"Union City, TN","p":2,"i":"10/22/26","st":"pending","lat":36.424,"lng":-89.057},{"n":"#103","c":"Flora, IL","p":2,"i":"10/23/26","st":"pending","lat":38.669,"lng":-88.486},{"n":"#277","c":"Bloomfield, IN","p":3,"i":"10/26/26","st":"pending","lat":39.027,"lng":-86.937},{"n":"#392","c":"Dickson, TN","p":3,"i":"10/26/26","st":"pending","lat":36.077,"lng":-87.388},{"n":"#314","c":"Washington, IN","p":3,"i":"10/27/26","st":"pending","lat":38.659,"lng":-87.173},{"n":"#323","c":"Fort Branch, IN","p":3,"i":"10/28/26","st":"pending","lat":38.251,"lng":-87.581},{"n":"#139","c":"Sikeston, MO","p":3,"i":"10/28/26","st":"pending","lat":36.877,"lng":-89.588},{"n":"#408","c":"Princeton, IN","p":3,"i":"10/29/26","st":"pending","lat":38.355,"lng":-87.568},{"n":"#133","c":"Bardwell, KY","p":3,"i":"10/29/26","st":"pending","lat":36.87,"lng":-89.01},{"n":"#285","c":"Petersburg, IN","p":3,"i":"10/30/26","st":"pending","lat":38.492,"lng":-87.279},{"n":"#402","c":"Evansville, IN","p":3,"i":"11/02/26","st":"pending","lat":37.972,"lng":-87.571},{"n":"#403","c":"Hopkinsville, KY","p":3,"i":"11/02/26","st":"pending","lat":36.866,"lng":-87.489},{"n":"#399","c":"Evansville, IN","p":3,"i":"11/03/26","st":"pending","lat":37.972,"lng":-87.571},{"n":"#309","c":"Hopkinsville, KY","p":3,"i":"11/03/26","st":"pending","lat":36.866,"lng":-87.489},{"n":"#383","c":"Evansville, IN","p":3,"i":"11/04/26","st":"pending","lat":37.972,"lng":-87.571},{"n":"#384","c":"Hopkinsville, KY","p":3,"i":"11/04/26","st":"pending","lat":36.866,"lng":-87.489},{"n":"#324","c":"Evansville, IN","p":3,"i":"11/05/26","st":"pending","lat":37.972,"lng":-87.571},{"n":"#396","c":"Bowling Green, KY","p":3,"i":"11/05/26","st":"pending","lat":36.99,"lng":-86.444},{"n":"#283","c":"Chandler, IN","p":3,"i":"11/06/26","st":"pending","lat":38.042,"lng":-87.368},{"n":"#397","c":"Bowling Green, KY","p":3,"i":"11/06/26","st":"pending","lat":36.99,"lng":-86.444},{"n":"#337","c":"Evansville, IN","p":3,"i":"11/09/26","st":"pending","lat":37.972,"lng":-87.571},{"n":"#368","c":"Madisonville, KY","p":3,"i":"11/09/26","st":"pending","lat":37.328,"lng":-87.499},{"n":"#272","c":"Newburgh, IN","p":3,"i":"11/10/26","st":"pending","lat":37.944,"lng":-87.405},{"n":"#307","c":"Providence, KY","p":3,"i":"11/10/26","st":"pending","lat":37.397,"lng":-87.762},{"n":"#374","c":"Owensboro, KY","p":3,"i":"11/11/26","st":"pending","lat":37.774,"lng":-87.113},{"n":"#305TC","c":"Beaver Dam, KY","p":3,"i":"11/11/26","st":"pending","lat":37.402,"lng":-86.876},{"n":"#372","c":"Owensboro, KY","p":3,"i":"11/12/26","st":"pending","lat":37.774,"lng":-87.113},{"n":"#291","c":"Morganfield, KY","p":3,"i":"11/12/26","st":"pending","lat":37.683,"lng":-87.917},{"n":"#362","c":"Mt Vernon, IN","p":3,"i":"11/13/26","st":"pending","lat":37.932,"lng":-87.895},{"n":"#302","c":"Sturgis, KY","p":3,"i":"11/13/26","st":"pending","lat":37.546,"lng":-87.984},{"n":"#312","c":"N. Manchester, IN","p":3,"i":"11/16/26","st":"pending","lat":40.99,"lng":-85.769},{"n":"#319","c":"Lexington, KY","p":3,"i":"11/16/26","st":"pending","lat":38.04,"lng":-84.504},{"n":"#293","c":"Greentown, IN","p":3,"i":"11/17/26","st":"pending","lat":40.477,"lng":-85.967},{"n":"#322","c":"Lexington, KY","p":3,"i":"11/17/26","st":"pending","lat":38.04,"lng":-84.504},{"n":"#404","c":"Morehead, KY","p":3,"i":"11/18/26","st":"pending","lat":38.184,"lng":-83.437},{"n":"#301","c":"Hope, IN","p":3,"i":"11/19/26","st":"pending","lat":39.304,"lng":-85.77},{"n":"#382","c":"Shelbyville, KY","p":3,"i":"11/19/26","st":"pending","lat":38.212,"lng":-85.224},{"n":"#320","c":"Batesville, IN","p":3,"i":"11/20/26","st":"pending","lat":39.3,"lng":-85.222},{"n":"#325","c":"Austin, IN","p":4,"i":"11/23/26","st":"pending","lat":38.758,"lng":-85.808},{"n":"#204","c":"Murphysboro, IL","p":4,"i":"11/23/26","st":"pending","lat":37.764,"lng":-89.335},{"n":"#398","c":"Jeffersonville, IN","p":4,"i":"11/24/26","st":"pending","lat":38.277,"lng":-85.737},{"n":"#212","c":"Harrisburg, IL","p":4,"i":"11/24/26","st":"pending","lat":37.738,"lng":-88.541},{"n":"#151","c":"Centralia, IL","p":4,"i":"11/25/26","st":"pending","lat":38.525,"lng":-89.133},{"n":"#394","c":"Bowling Green, KY","p":5,"i":"12/07/26","st":"pending","lat":36.99,"lng":-86.444},{"n":"#353","c":"Bloomington, IL","p":5,"i":"12/07/26","st":"pending","lat":40.484,"lng":-88.994},{"n":"#405","c":"Elizabethtown, KY","p":5,"i":"12/07/26","st":"pending","lat":37.694,"lng":-85.859},{"n":"#395","c":"Bowling Green, KY","p":5,"i":"12/08/26","st":"pending","lat":36.99,"lng":-86.444},{"n":"#262","c":"Springfield, IL","p":5,"i":"12/08/26","st":"pending","lat":39.781,"lng":-89.65},{"n":"#316","c":"Charlestown, IN","p":5,"i":"12/08/26","st":"pending","lat":38.452,"lng":-85.67},{"n":"#364","c":"Madisonville, KY","p":5,"i":"12/09/26","st":"pending","lat":37.328,"lng":-87.499},{"n":"#381","c":"Shelbyville, KY","p":5,"i":"12/09/26","st":"pending","lat":38.212,"lng":-85.224},{"n":"#386","c":"Crofton, KY","p":5,"i":"12/10/26","st":"pending","lat":37.024,"lng":-87.484},{"n":"#175","c":"Mattoon, IL","p":5,"i":"12/10/26","st":"pending","lat":39.483,"lng":-88.373},{"n":"#380","c":"Simpsonville, KY","p":5,"i":"12/10/26","st":"pending","lat":38.222,"lng":-85.355},{"n":"#284","c":"Mt Vernon, IN","p":5,"i":"12/11/26","st":"pending","lat":37.932,"lng":-87.895},{"n":"#339","c":"Huntingburg, IN","p":5,"i":"12/14/26","st":"pending","lat":38.298,"lng":-86.955},{"n":"#315","c":"Fairview Hts, IL","p":5,"i":"12/14/26","st":"pending","lat":38.589,"lng":-89.99},{"n":"#280","c":"Orleans, IN","p":5,"i":"12/14/26","st":"pending","lat":38.661,"lng":-86.452},{"n":"#350","c":"Jasper, IN","p":5,"i":"12/15/26","st":"pending","lat":38.391,"lng":-86.931},{"n":"#326","c":"Caseyville, IL","p":5,"i":"12/15/26","st":"pending","lat":38.636,"lng":-90.026},{"n":"#313","c":"Brownstown, IN","p":5,"i":"12/15/26","st":"pending","lat":38.879,"lng":-86.042},{"n":"#286","c":"Jasper, IN","p":5,"i":"12/16/26","st":"pending","lat":38.391,"lng":-86.931},{"n":"#311","c":"Seymour, IN","p":5,"i":"12/16/26","st":"pending","lat":38.959,"lng":-85.89},{"n":"#289","c":"French Lick, IN","p":5,"i":"12/17/26","st":"pending","lat":38.549,"lng":-86.62},{"n":"#365","c":"Reidland, KY","p":5,"i":"12/17/26","st":"pending","lat":37.017,"lng":-88.533},{"n":"#298","c":"Fortville, IN","p":5,"i":"12/17/26","st":"pending","lat":39.932,"lng":-85.847},{"n":"#304","c":"Paoli, IN","p":5,"i":"12/18/26","st":"pending","lat":38.556,"lng":-86.468},{"n":"#385","c":"Huntingdon, TN","p":5,"i":"12/18/26","st":"pending","lat":36,"lng":-88.428}];
@@ -108,6 +133,8 @@ var STATUS_META = [
 ];
 
 var map, markers = [], activePhase = 0, activeStatuses = null;
+var highlightCircle = null;
+var legendControl = null;
 
 function init() {
   map = L.map('map', { zoomControl: true }).setView([38.5, -88.0], 6);
@@ -143,20 +170,32 @@ function init() {
     markers.push(marker);
   });
 
+  // Add legend as a Leaflet control (bottom-left)
+  legendControl = L.control({position: 'bottomleft'});
+  legendControl.onAdd = function() {
+    var div = L.DomUtil.create('div', 'map-legend');
+    div.id = 'mapLegend';
+    L.DomEvent.disableClickPropagation(div);
+    return div;
+  };
+  legendControl.addTo(map);
+
   buildLegend();
   buildStatusBtns();
+  initSearch();
 }
 
 function buildLegend() {
+  var el = document.getElementById('mapLegend');
+  if (!el) return;
   var counts = {};
   STATUS_META.forEach(function(m){ counts[m.key] = 0; });
-  var visible = markers.filter(function(mk){
+  markers.forEach(function(mk){
     var s = mk._storeData;
     var phaseOk = activePhase === 0 || s.p === activePhase;
     var statusOk = !activeStatuses || activeStatuses[s.st];
-    return phaseOk && statusOk;
+    if (phaseOk && statusOk) counts[s.st]++;
   });
-  visible.forEach(function(mk){ counts[mk._storeData.st]++; });
 
   var html = '<h4>Legend</h4>';
   STATUS_META.forEach(function(m) {
@@ -166,7 +205,7 @@ function buildLegend() {
       '<span class="legend-count">' + counts[m.key] + '</span>' +
     '</div>';
   });
-  document.getElementById('mapLegend').innerHTML = html;
+  el.innerHTML = html;
 }
 
 function buildStatusBtns() {
@@ -225,7 +264,6 @@ function applyFilters() {
   document.getElementById('cnt-atrisk').textContent = counts.atrisk;
   document.getElementById('cnt-pending').textContent = counts.pending;
 
-  // Update status button styling
   var stBtns = document.querySelectorAll('.st-btn');
   for (var i = 0; i < stBtns.length; i++) {
     var key = stBtns[i].getAttribute('data-st');
@@ -237,8 +275,82 @@ function applyFilters() {
       stBtns[i].classList.add('dimmed');
     }
   }
-
   buildLegend();
+}
+
+function initSearch() {
+  var input = document.getElementById('searchInput');
+  var results = document.getElementById('searchResults');
+
+  input.addEventListener('input', function() {
+    var q = this.value.trim().toLowerCase();
+    if (q.length < 1) { results.classList.remove('open'); return; }
+
+    var matches = STORES.filter(function(s) {
+      var num = s.n.toLowerCase().replace('#','');
+      var qClean = q.replace('#','');
+      return num.indexOf(qClean) !== -1 || s.c.toLowerCase().indexOf(q) !== -1;
+    }).slice(0, 10);
+
+    if (matches.length === 0) {
+      results.innerHTML = '<div class="sr-none">No stores found</div>';
+    } else {
+      results.innerHTML = matches.map(function(s) {
+        var meta = STATUS_META.find(function(m){ return m.key === s.st; }) || STATUS_META[4];
+        return '<div class="sr-item" data-store="' + s.n + '">' +
+          '<span class="sr-dot" style="background:' + meta.color + '"></span>' +
+          '<span class="sr-name">Huck\'s ' + s.n + '</span>' +
+          '<span class="sr-city">Ph ' + s.p + ' &middot; ' + s.c + '</span>' +
+        '</div>';
+      }).join('');
+    }
+    results.classList.add('open');
+
+    var items = results.querySelectorAll('.sr-item');
+    for (var i = 0; i < items.length; i++) {
+      items[i].addEventListener('click', function() {
+        var storeName = this.getAttribute('data-store');
+        flyToStore(storeName);
+        results.classList.remove('open');
+        input.value = storeName;
+      });
+    }
+  });
+
+  input.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+      var first = results.querySelector('.sr-item');
+      if (first) {
+        flyToStore(first.getAttribute('data-store'));
+        results.classList.remove('open');
+        input.value = first.getAttribute('data-store');
+      }
+    }
+    if (e.key === 'Escape') { results.classList.remove('open'); input.blur(); }
+  });
+
+  document.addEventListener('click', function(e) {
+    if (!e.target.closest('.search-wrap')) results.classList.remove('open');
+  });
+}
+
+function flyToStore(storeName) {
+  var mk = markers.find(function(m){ return m._storeData.n === storeName; });
+  if (!mk) return;
+  var s = mk._storeData;
+  map.flyTo([s.lat, s.lng], 12, { duration: 0.8 });
+  mk.setStyle({ opacity: 1, fillOpacity: 0.9 });
+  mk.setRadius(10);
+  if (highlightCircle) { map.removeLayer(highlightCircle); }
+  highlightCircle = L.circleMarker([s.lat, s.lng], {
+    radius: 18, fillColor: 'transparent', fillOpacity: 0,
+    color: '#58a6ff', weight: 3, opacity: 0.8
+  }).addTo(map);
+  setTimeout(function(){ mk.openPopup(); }, 900);
+  setTimeout(function(){
+    if (highlightCircle) { map.removeLayer(highlightCircle); highlightCircle = null; }
+    applyFilters();
+  }, 4000);
 }
 
 init();
