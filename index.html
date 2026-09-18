@@ -134,7 +134,6 @@ var STATUS_META = [
 
 var map, markers = [], activePhase = 0, activeStatuses = null;
 var highlightCircle = null;
-var legendControl = null;
 
 function init() {
   map = L.map('map', { zoomControl: true }).setView([38.5, -88.0], 6);
@@ -170,15 +169,14 @@ function init() {
     markers.push(marker);
   });
 
-  // Add legend as a Leaflet control (bottom-left)
-  legendControl = L.control({position: 'bottomleft'});
-  legendControl.onAdd = function() {
+  var lc = L.control({position: 'bottomleft'});
+  lc.onAdd = function() {
     var div = L.DomUtil.create('div', 'map-legend');
     div.id = 'mapLegend';
     L.DomEvent.disableClickPropagation(div);
     return div;
   };
-  legendControl.addTo(map);
+  lc.addTo(map);
 
   buildLegend();
   buildStatusBtns();
@@ -196,7 +194,6 @@ function buildLegend() {
     var statusOk = !activeStatuses || activeStatuses[s.st];
     if (phaseOk && statusOk) counts[s.st]++;
   });
-
   var html = '<h4>Legend</h4>';
   STATUS_META.forEach(function(m) {
     html += '<div class="legend-row">' +
@@ -257,13 +254,11 @@ function applyFilters() {
       m.setRadius(3);
     }
   });
-
   document.getElementById('cnt-complete').textContent = counts.complete;
   document.getElementById('cnt-ready').textContent = counts.ready;
   document.getElementById('cnt-watch').textContent = counts.watch;
   document.getElementById('cnt-atrisk').textContent = counts.atrisk;
   document.getElementById('cnt-pending').textContent = counts.pending;
-
   var stBtns = document.querySelectorAll('.st-btn');
   for (var i = 0; i < stBtns.length; i++) {
     var key = stBtns[i].getAttribute('data-st');
@@ -285,13 +280,11 @@ function initSearch() {
   input.addEventListener('input', function() {
     var q = this.value.trim().toLowerCase();
     if (q.length < 1) { results.classList.remove('open'); return; }
-
     var matches = STORES.filter(function(s) {
       var num = s.n.toLowerCase().replace('#','');
       var qClean = q.replace('#','');
       return num.indexOf(qClean) !== -1 || s.c.toLowerCase().indexOf(q) !== -1;
     }).slice(0, 10);
-
     if (matches.length === 0) {
       results.innerHTML = '<div class="sr-none">No stores found</div>';
     } else {
@@ -305,7 +298,6 @@ function initSearch() {
       }).join('');
     }
     results.classList.add('open');
-
     var items = results.querySelectorAll('.sr-item');
     for (var i = 0; i < items.length; i++) {
       items[i].addEventListener('click', function() {
@@ -320,11 +312,7 @@ function initSearch() {
   input.addEventListener('keydown', function(e) {
     if (e.key === 'Enter') {
       var first = results.querySelector('.sr-item');
-      if (first) {
-        flyToStore(first.getAttribute('data-store'));
-        results.classList.remove('open');
-        input.value = first.getAttribute('data-store');
-      }
+      if (first) { flyToStore(first.getAttribute('data-store')); results.classList.remove('open'); input.value = first.getAttribute('data-store'); }
     }
     if (e.key === 'Escape') { results.classList.remove('open'); input.blur(); }
   });
