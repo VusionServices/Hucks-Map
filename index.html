@@ -1,45 +1,297 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Huck's 133 Store Rollout Map</title>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<title>Huck's 133 Rollout Map</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
-body { margin: 0; padding: 0; font-family: system-ui, sans-serif; }
-#map { width: 100%; height: 100vh; }
-.legend { background: rgba(255,255,255,0.95); padding: 12px 16px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.2); font-size: 13px; line-height: 1.8; }
-.legend h4 { margin: 0 0 8px; font-size: 14px; }
-.legend-item { display: flex; align-items: center; gap: 8px; }
-.legend-dot { width: 12px; height: 12px; border-radius: 50%; border: 2px solid white; box-shadow: 0 1px 2px rgba(0,0,0,0.3); }
-.info-panel { background: rgba(26,31,46,0.95); color: white; padding: 16px; border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); font-size: 13px; min-width: 200px; }
-.info-panel h3 { margin: 0 0 6px; font-size: 16px; }
-.header { position: absolute; top: 10px; left: 60px; z-index: 1000; background: rgba(26,31,46,0.9); color: white; padding: 10px 20px; border-radius: 8px; font-weight: 800; font-size: 16px; box-shadow: 0 2px 10px rgba(0,0,0,0.3); }
-.header span { color: #e2a012; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: #0d1117; }
+  #header {
+    background: linear-gradient(135deg, #0d1117 0%, #161b22 100%);
+    color: #e6edf3; padding: 12px 24px; display: flex;
+    align-items: center; justify-content: space-between;
+    border-bottom: 2px solid #2e8b57;
+  }
+  #header h1 { font-size: 18px; font-weight: 700; }
+  #header .subtitle { font-size: 12px; color: #8b949e; }
+  .legend-bar {
+    background: #161b22; padding: 8px 24px; display: flex;
+    align-items: center; gap: 20px; border-bottom: 1px solid #30363d;
+  }
+  .legend-item { display: flex; align-items: center; gap: 6px; color: #c9d1d9; font-size: 12px; }
+  .legend-dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
+  .stats { display: flex; gap: 16px; }
+  .stat { color: #8b949e; font-size: 12px; }
+  .stat strong { color: #e6edf3; font-size: 16px; }
+  #map { width: 100%; height: calc(100vh - 90px); }
+  .store-popup { font-family: 'Segoe UI', system-ui, sans-serif; min-width: 200px; }
+  .store-popup h3 { margin: 0 0 6px; font-size: 15px; color: #0d1117; }
+  .store-popup .meta { font-size: 12px; color: #57606a; margin-bottom: 4px; }
+  .store-popup .status-badge {
+    display: inline-block; padding: 2px 8px; border-radius: 10px;
+    font-size: 11px; font-weight: 600; color: #fff; margin-top: 4px;
+  }
+  .store-popup .complete { background: #2e8b57; }
+  .store-popup .pending { background: #7b4fbf; }
+  .store-popup a { color: #0969da; font-size: 12px; text-decoration: none; display: block; margin-top: 6px; }
+  .store-popup a:hover { text-decoration: underline; }
+  .phase-filters { display: flex; gap: 6px; margin-left: auto; }
+  .phase-btn {
+    background: #21262d; color: #c9d1d9; border: 1px solid #30363d;
+    padding: 3px 10px; border-radius: 12px; font-size: 11px;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .phase-btn:hover { border-color: #58a6ff; }
+  .phase-btn.active { background: #388bfd; color: #fff; border-color: #388bfd; }
 </style>
 </head>
 <body>
-<div class="header">VUSION x <span>HUCK'S</span> Rollout Map - 133 Stores - 21 Complete - 1 In Progress</div>
+<div id="header">
+  <div>
+    <h1>Huck's 133 Store ESL Rollout</h1>
+    <div class="subtitle">Vusion Field Operations &middot; Updated Sep 18, 2026</div>
+  </div>
+  <div class="stats">
+    <div class="stat"><strong id="complete-count">23</strong><br>Complete</div>
+    <div class="stat"><strong id="remaining-count">110</strong><br>Remaining</div>
+    <div class="stat"><strong>133</strong><br>Total</div>
+  </div>
+</div>
+<div class="legend-bar">
+  <div class="legend-item"><span class="legend-dot" style="background:#2e8b57"></span> Complete</div>
+  <div class="legend-item"><span class="legend-dot" style="background:#17a2b8"></span> Ready</div>
+  <div class="legend-item"><span class="legend-dot" style="background:#7b4fbf"></span> Pending</div>
+  <div class="legend-item"><span class="legend-dot" style="background:#b8860b"></span> Watch</div>
+  <div class="legend-item"><span class="legend-dot" style="background:#c84040"></span> At Risk</div>
+  <div class="phase-filters">
+    <button class="phase-btn active" onclick="filterPhase(0)">All</button>
+    <button class="phase-btn" onclick="filterPhase(1)">Ph 1</button>
+    <button class="phase-btn" onclick="filterPhase(2)">Ph 2</button>
+    <button class="phase-btn" onclick="filterPhase(3)">Ph 3</button>
+    <button class="phase-btn" onclick="filterPhase(4)">Ph 4</button>
+    <button class="phase-btn" onclick="filterPhase(5)">Ph 5</button>
+  </div>
+</div>
 <div id="map"></div>
+
 <script>
-var map = L.map('map').setView([38.3, -88.0], 6);
-L.tileLayer('https://tile.openstreetmap.de/{z}/{x}/{y}.png', {
-  attribution: 'OpenStreetMap', maxZoom: 18
-}).addTo(map);
-var data = [{"lat": 38.775, "lon": -90.8, "color": "#2e8b57", "num": "#391", "city": "Lake Saint Louis, MO", "phase": 1, "install": "08/31/26", "mat": "Delivered", "fix": "Delivered", "status": "COMPLETE"}, {"lat": 38.781, "lon": -90.337, "color": "#2e8b57", "num": "#264", "city": "Florissant, MO", "phase": 1, "install": "08/31/26", "mat": "Delivered", "fix": "Delivered", "status": "COMPLETE"}, {"lat": 38.806, "lon": -90.71, "color": "#2e8b57", "num": "#267", "city": "O'Fallon, MO", "phase": 1, "install": "09/01/26", "mat": "Delivered", "fix": "Delivered", "status": "COMPLETE"}, {"lat": 38.89, "lon": -90.189, "color": "#2e8b57", "num": "#296", "city": "Alton, IL", "phase": 1, "install": "09/01/26", "mat": "Delivered", "fix": "Delivered", "status": "COMPLETE"}, {"lat": 38.804, "lon": -90.627, "color": "#2e8b57", "num": "#222", "city": "St Peters, MO", "phase": 1, "install": "09/02/26", "mat": "Delivered", "fix": "Delivered", "status": "COMPLETE"}, {"lat": 38.528, "lon": -89.979, "color": "#2e8b57", "num": "#281", "city": "Belleville, IL", "phase": 1, "install": "09/02/26", "mat": "Delivered", "fix": "Delivered", "status": "COMPLETE"}, {"lat": 38.796, "lon": -90.471, "color": "#2e8b57", "num": "#237", "city": "St Charles, MO", "phase": 1, "install": "09/03/26", "mat": "Delivered", "fix": "Delivered", "status": "COMPLETE"}, {"lat": 38.504, "lon": -90.196, "color": "#2e8b57", "num": "#310", "city": "Dupo, IL", "phase": 1, "install": "09/03/26", "mat": "Delivered", "fix": "Delivered", "status": "COMPLETE"}, {"lat": 37.795, "lon": -89.008, "color": "#2e8b57", "num": "#366", "city": "Herrin, IL", "phase": 1, "install": "09/08/26", "mat": "Delivered", "fix": "Delivered", "status": "COMPLETE"}, {"lat": 38.579, "lon": -90.427, "color": "#2e8b57", "num": "#270", "city": "Kirkwood, MO", "phase": 1, "install": "09/08/26", "mat": "Delivered", "fix": "Delivered", "status": "COMPLETE"}, {"lat": 38.336, "lon": -90.165, "color": "#2e8b57", "num": "#343", "city": "Waterloo, IL", "phase": 1, "install": "09/09/26", "mat": "Delivered", "fix": "Delivered", "status": "COMPLETE"}, {"lat": 37.807, "lon": -89.038, "color": "#2e8b57", "num": "#239", "city": "Herrin, IL", "phase": 1, "install": "09/09/26", "mat": "Delivered", "fix": "Delivered", "status": "COMPLETE"}, {"lat": 39.716, "lon": -91.364, "color": "#2e8b57", "num": "#100", "city": "Hannibal, MO", "phase": 1, "install": "09/10/26", "mat": "Delivered", "fix": "Delivered", "status": "COMPLETE"}, {"lat": 37.772, "lon": -89.077, "color": "#2e8b57", "num": "#367", "city": "Carterville, IL", "phase": 1, "install": "09/10/26", "mat": "Delivered", "fix": "Delivered", "status": "COMPLETE"}, {"lat": 38.615, "lon": -88.941, "color": "#2e8b57", "num": "#351", "city": "Salem, IL", "phase": 1, "install": "09/11/26", "mat": "Delivered", "fix": "Delivered", "status": "COMPLETE"}, {"lat": 37.722, "lon": -88.923, "color": "#2e8b57", "num": "#161", "city": "Marion, IL", "phase": 1, "install": "09/11/26", "mat": "Delivered", "fix": "Delivered", "status": "COMPLETE"}, {"lat": 38.313, "lon": -88.888, "color": "#2e8b57", "num": "#134", "city": "Mt Vernon, IL", "phase": 1, "install": "09/14/26", "mat": "Delivered", "fix": "Delivered", "status": "COMPLETE"}, {"lat": 37.727, "lon": -89.197, "color": "#2e8b57", "num": "#344", "city": "Carbondale, IL", "phase": 1, "install": "09/14/26", "mat": "Delivered", "fix": "Delivered", "status": "COMPLETE"}, {"lat": 38.321, "lon": -88.923, "color": "#2e8b57", "num": "#259", "city": "Mt Vernon, IL", "phase": 1, "install": "09/15/26", "mat": "Delivered", "fix": "Delivered", "status": "COMPLETE"}, {"lat": 37.738, "lon": -88.948, "color": "#7b4fbf", "num": "#379", "city": "Marion, IL", "phase": 1, "install": "09/15/26", "mat": "Delivered", "fix": "Delivered", "status": "PENDING"}, {"lat": 38.329, "lon": -88.913, "color": "#e67e22", "num": "#51TC", "city": "Mt Vernon, IL", "phase": 1, "install": "09/16/26", "mat": "Delivered", "fix": "Delivered", "status": "IN PROGRESS"}, {"lat": 37.718, "lon": -88.938, "color": "#2e8b57", "num": "#247", "city": "Marion, IL", "phase": 1, "install": "09/16/26", "mat": "Delivered", "fix": "Delivered", "status": "COMPLETE"}, {"lat": 38.309, "lon": -88.903, "color": "#7b4fbf", "num": "#349", "city": "Mt Vernon, IL", "phase": 1, "install": "09/17/26", "mat": "Delivered", "fix": "Delivered", "status": "PENDING"}, {"lat": 37.726, "lon": -88.928, "color": "#2e8b57", "num": "#388", "city": "Marion, IL", "phase": 1, "install": "09/17/26", "mat": "Delivered", "fix": "Delivered", "status": "COMPLETE"}, {"lat": 38.317, "lon": -88.893, "color": "#7b4fbf", "num": "#371", "city": "Mt Vernon, IL", "phase": 1, "install": "09/18/26", "mat": "Delivered", "fix": "Delivered", "status": "PENDING"}, {"lat": 37.742, "lon": -88.526, "color": "#7b4fbf", "num": "#177", "city": "Harrisburg, IL", "phase": 1, "install": "09/18/26", "mat": "Delivered", "fix": "Delivered", "status": "PENDING"}, {"lat": 38.387, "lon": -88.34, "color": "#7b4fbf", "num": "#241", "city": "Fairfield, IL", "phase": 2, "install": "09/22/26", "mat": "Delivered", "fix": "Delivered", "status": "PENDING"}, {"lat": 38.018, "lon": -89.681, "color": "#7b4fbf", "num": "#219", "city": "Steeleville, IL", "phase": 2, "install": "09/22/26", "mat": "Delivered", "fix": "Delivered", "status": "PENDING"}, {"lat": 38.246, "lon": -88.009, "color": "#7b4fbf", "num": "#101", "city": "Grayville, IL", "phase": 2, "install": "09/23/26", "mat": "Delivered", "fix": "Delivered", "status": "PENDING"}, {"lat": 37.965, "lon": -89.063, "color": "#7b4fbf", "num": "#114", "city": "Christopher, IL", "phase": 2, "install": "09/23/26", "mat": "Delivered", "fix": "Delivered", "status": "PENDING"}, {"lat": 38.089, "lon": -88.541, "color": "#7b4fbf", "num": "#130", "city": "Mcleansboro, IL", "phase": 2, "install": "09/24/26", "mat": "Delivered", "fix": "Delivered", "status": "PENDING"}, {"lat": 38.007, "lon": -88.92, "color": "#7b4fbf", "num": "#200", "city": "Benton, IL", "phase": 2, "install": "09/24/26", "mat": "Delivered", "fix": "Delivered", "status": "PENDING"}, {"lat": 37.817, "lon": -88.433, "color": "#7b4fbf", "num": "#197", "city": "Eldorado, IL", "phase": 2, "install": "09/25/26", "mat": "Delivered", "fix": "Delivered", "status": "PENDING"}, {"lat": 37.906, "lon": -88.922, "color": "#7b4fbf", "num": "#104", "city": "W. Frankfort, IL", "phase": 2, "install": "09/25/26", "mat": "Delivered", "fix": "Delivered", "status": "PENDING"}, {"lat": 40.706, "lon": -89.574, "color": "#7b4fbf", "num": "#357", "city": "Peoria, IL", "phase": 2, "install": "09/28/26", "mat": "Pending", "fix": "Pending", "status": "PENDING"}, {"lat": 37.139, "lon": -88.712, "color": "#7b4fbf", "num": "#111", "city": "Metropolis, IL", "phase": 2, "install": "09/28/26", "mat": "Pending", "fix": "Pending", "status": "PENDING"}, {"lat": 40.686, "lon": -89.609, "color": "#7b4fbf", "num": "#249", "city": "Peoria, IL", "phase": 2, "install": "09/29/26", "mat": "Pending", "fix": "Pending", "status": "PENDING"}, {"lat": 37.08, "lon": -88.615, "color": "#7b4fbf", "num": "#406", "city": "Paducah, KY", "phase": 2, "install": "09/29/26", "mat": "Pending", "fix": "Pending", "status": "PENDING"}, {"lat": 40.694, "lon": -89.599, "color": "#7b4fbf", "num": "#260", "city": "Peoria, IL", "phase": 2, "install": "09/30/26", "mat": "Pending", "fix": "Pending", "status": "PENDING"}, {"lat": 37.088, "lon": -88.605, "color": "#7b4fbf", "num": "#377", "city": "Paducah, KY", "phase": 2, "install": "09/30/26", "mat": "Pending", "fix": "Pending", "status": "PENDING"}, {"lat": 40.702, "lon": -89.589, "color": "#7b4fbf", "num": "#358", "city": "Peoria, IL", "phase": 2, "install": "10/01/26", "mat": "Pending", "fix": "Pending", "status": "PENDING"}, {"lat": 37.096, "lon": -88.595, "color": "#7b4fbf", "num": "#378", "city": "Paducah, KY", "phase": 2, "install": "10/01/26", "mat": "Pending", "fix": "Pending", "status": "PENDING"}, {"lat": 40.709, "lon": -89.263, "color": "#7b4fbf", "num": "#188", "city": "Eureka, IL", "phase": 2, "install": "10/02/26", "mat": "Pending", "fix": "Pending", "status": "PENDING"}, {"lat": 40.476, "lon": -88.979, "color": "#7b4fbf", "num": "#360", "city": "Bloomington, IL", "phase": 2, "install": "10/05/26", "mat": "Pending", "fix": "Pending", "status": "PENDING"}, {"lat": 37.056, "lon": -88.093, "color": "#7b4fbf", "num": "#52TC", "city": "Kuttawa, KY", "phase": 3, "install": "10/05/26", "mat": "Pending", "fix": "Pending", "status": "PENDING"}, {"lat": 40.484, "lon": -89.014, "color": "#7b4fbf", "num": "#355", "city": "Bloomington, IL", "phase": 3, "install": "10/06/26", "mat": "Pending", "fix": "Pending", "status": "PENDING"}, {"lat": 36.745, "lon": -88.652, "color": "#7b4fbf", "num": "#401", "city": "Mayfield, KY", "phase": 3, "install": "10/06/26", "mat": "Pending", "fix": "Pending", "status": "PENDING"}, {"lat": 40.321, "lon": -88.984, "color": "#7b4fbf", "num": "#186", "city": "Heyworth, IL", "phase": 3, "install": "10/07/26", "mat": "Pending", "fix": "Pending", "status": "PENDING"}, {"lat": 36.622, "lon": -88.32, "color": "#7b4fbf", "num": "#376", "city": "Murray, KY", "phase": 3, "install": "10/07/26", "mat": "Pending", "fix": "Pending", "status": "PENDING"}, {"lat": 40.231, "lon": -88.642, "color": "#7b4fbf", "num": "#54", "city": "Farmers City, IL", "phase": 3, "install": "10/08/26", "mat": "Pending", "fix": "Pending", "status": "PENDING"}, {"lat": 36.602, "lon": -88.31, "color": "#7b4fbf", "num": "#393", "city": "Murray, KY", "phase": 3, "install": "10/08/26", "mat": "Pending", "fix": "Pending", "status": "PENDING"}, {"lat": 39.836, "lon": -88.945, "color": "#7b4fbf", "num": "#287", "city": "Decatur, IL", "phase": 3, "install": "10/12/26", "mat": "Pending", "fix": "Pending", "status": "PENDING"}, {"lat": 37.306, "lon": -89.504, "color": "#7b4fbf", "num": "#271", "city": "Cape Girardeau, MO", "phase": 3, "install": "10/12/26", "mat": "Pending", "fix": "Pending", "status": "PENDING"}, {"lat": 39.777, "lon": -88.854, "color": "#7b4fbf", "num": "#173", "city": "Mt Zion, IL", "phase": 3, "install": "10/13/26", "mat": "Pending", "fix": "Pending", "status": "PENDING"}, {"lat": 39.504, "lon": -88.196, "color": "#7b4fbf", "num": "#407", "city": "Charleston, IL", "phase": 3, "install": "10/14/26", "mat": "Pending", "fix": "Pending", "status": "PENDING"}, {"lat": 36.769, "lon": -90.408, "color": "#7b4fbf", "num": "#265", "city": "Poplar Bluff, MO", "phase": 3, "install": "10/14/26", "mat": "Pending", "fix": "Pending", "status": "PENDING"}, {"lat": 39.484, "lon": -88.186, "color": "#7b4fbf", "num": "#250", "city": "Charleston, IL", "phase": 3, "install": "10/15/26", "mat": "Pending", "fix": "Pending", "status": "PENDING"}, {"lat": 36.228, "lon": -90.061, "color": "#7b4fbf", "num": "#321", "city": "Kennett, MO", "phase": 3, "install": "10/15/26", "mat": "Pending", "fix": "Pending", "status": "PENDING"}, {"lat": 38.673, "lon": -87.529, "color": "#7b4fbf", "num": "#338", "city": "Vincennes, IN", "phase": 3, "install": "10/19/26", "mat": "Pending", "fix": "Pending", "status": "PENDING"}, {"lat": 35.614, "lon": -88.809, "color": "#7b4fbf", "num": "#300", "city": "Jackson, TN", "phase": 3, "install": "10/19/26", "mat": "Pending", "fix": "Pending", "status": "PENDING"}, {"lat": 38.681, "lon": -87.519, "color": "#7b4fbf", "num": "#135", "city": "Vincennes, IN", "phase": 3, "install": "10/20/26", "mat": "Pending", "fix": "Pending", "status": "PENDING"}, {"lat": 35.622, "lon": -88.799, "color": "#7b4fbf", "num": "#303", "city": "Jackson, TN", "phase": 3, "install": "10/20/26", "mat": "Pending", "fix": "Pending", "status": "PENDING"}, {"lat": 38.689, "lon": -87.509, "color": "#7b4fbf", "num": "#290", "city": "Vincennes, IN", "phase": 3, "install": "10/21/26", "mat": "Pending", "fix": "Pending", "status": "PENDING"}, {"lat": 36.331, "lon": -88.87, "color": "#7b4fbf", "num": "#105", "city": "Martin, TN", "phase": 3, "install": "10/21/26", "mat": "Pending", "fix": "Pending", "status": "PENDING"}, {"lat": 38.997, "lon": -87.754, "color": "#7b4fbf", "num": "#210", "city": "Robinson, IL", "phase": 3, "install": "10/22/26", "mat": "Pending", "fix": "Pending", "status": "PENDING"}, {"lat": 36.42, "lon": -89.067, "color": "#7b4fbf", "num": "#308", "city": "Union City, TN", "phase": 3, "install": "10/22/26", "mat": "Pending", "fix": "Pending", "status": "PENDING"}, {"lat": 38.669, "lon": -88.491, "color": "#7b4fbf", "num": "#103", "city": "Flora, IL", "phase": 3, "install": "10/23/26", "mat": "Pending", "fix": "Pending", "status": "PENDING"}, {"lat": 39.031, "lon": -86.937, "color": "#7b4fbf", "num": "#277", "city": "Bloomfield, IN", "phase": 3, "install": "10/26/26", "mat": "Pending", "fix": "Pending", "status": "PENDING"}, {"lat": 36.085, "lon": -87.383, "color": "#7b4fbf", "num": "#392", "city": "Dickson, TN", "phase": 3, "install": "10/26/26", "mat": "Pending", "fix": "Pending", "status": "PENDING"}, {"lat": 38.671, "lon": -87.163, "color": "#7b4fbf", "num": "#314", "city": "Washington, IN", "phase": 3, "install": "10/27/26", "mat": "Pending", "fix": "Pending", "status": "PENDING"}, {"lat": 38.239, "lon": -87.566, "color": "#7b4fbf", "num": "#323", "city": "Fort Branch, IN", "phase": 4, "install": "10/28/26", "mat": "Pending", "fix": "Pending", "status": "PENDING"}, {"lat": 36.869, "lon": -89.568, "color": "#7b4fbf", "num": "#139", "city": "Sikeston, MO", "phase": 4, "install": "10/28/26", "mat": "Pending", "fix": "Pending", "status": "PENDING"}, {"lat": 38.351, "lon": -87.588, "color": "#7b4fbf", "num": "#408", "city": "Princeton, IN", "phase": 4, "install": "10/29/26", "mat": "Pending", "fix": "Pending", "status": "PENDING"}, {"lat": 36.87, "lon": -89.025, "color": "#7b4fbf", "num": "#133", "city": "Bardwell, KY", "phase": 4, "install": "10/29/26", "mat": "Pending", "fix": "Pending", "status": "PENDING"}, {"lat": 38.496, "lon": -87.289, "color": "#7b4fbf", "num": "#285", "city": "Petersburg, IN", "phase": 4, "install": "10/30/26", "mat": "Pending", "fix": "Pending", "status": "PENDING"}, {"lat": 37.98, "lon": -87.576, "color": "#7b4fbf", "num": "#402", "city": "Evansville, IN", "phase": 4, "install": "11/02/26", "mat": "Pending", "fix": "Pending", "status": "PENDING"}, {"lat": 36.878, "lon": -87.489, "color": "#7b4fbf", "num": "#403", "city": "Hopkinsville, KY", "phase": 4, "install": "11/02/26", "mat": "Pending", "fix": "Pending", "status": "PENDING"}, {"lat": 37.96, "lon": -87.566, "color": "#7b4fbf", "num": "#399", "city": "Evansville, IN", "phase": 4, "install": "11/03/26", "mat": "Pending", "fix": "Pending", "status": "PENDING"}, {"lat": 36.858, "lon": -87.479, "color": "#7b4fbf", "num": "#309", "city": "Hopkinsville, KY", "phase": 4, "install": "11/03/26", "mat": "Pending", "fix": "Pending", "status": "PENDING"}, {"lat": 37.968, "lon": -87.556, "color": "#7b4fbf", "num": "#383", "city": "Evansville, IN", "phase": 4, "install": "11/04/26", "mat": "Pending", "fix": "Pending", "status": "PENDING"}, {"lat": 36.866, "lon": -87.469, "color": "#7b4fbf", "num": "#384", "city": "Hopkinsville, KY", "phase": 4, "install": "11/04/26", "mat": "Pending", "fix": "Pending", "status": "PENDING"}, {"lat": 37.976, "lon": -87.591, "color": "#7b4fbf", "num": "#324", "city": "Evansville, IN", "phase": 4, "install": "11/05/26", "mat": "Pending", "fix": "Pending", "status": "PENDING"}, {"lat": 36.998, "lon": -86.459, "color": "#7b4fbf", "num": "#396", "city": "Bowling Green, KY", "phase": 4, "install": "11/05/26", "mat": "Pending", "fix": "Pending", "status": "PENDING"}, {"lat": 38.054, "lon": -87.378, "color": "#7b4fbf", "num": "#283", "city": "Chandler, IN", "phase": 4, "install": "11/06/26", "mat": "Pending", "fix": "Pending", "status": "PENDING"}, {"lat": 36.978, "lon": -86.449, "color": "#7b4fbf", "num": "#397", "city": "Bowling Green, KY", "phase": 4, "install": "11/06/26", "mat": "Pending", "fix": "Pending", "status": "PENDING"}, {"lat": 37.964, "lon": -87.571, "color": "#7b4fbf", "num": "#337", "city": "Evansville, IN", "phase": 4, "install": "11/09/26", "mat": "Pending", "fix": "Pending", "status": "PENDING"}, {"lat": 37.324, "lon": -87.494, "color": "#7b4fbf", "num": "#368", "city": "Madisonville, KY", "phase": 4, "install": "11/09/26", "mat": "Pending", "fix": "Pending", "status": "PENDING"}, {"lat": 37.944, "lon": -87.395, "color": "#7b4fbf", "num": "#272", "city": "Newburgh, IN", "phase": 4, "install": "11/10/26", "mat": "Pending", "fix": "Pending", "status": "PENDING"}, {"lat": 37.401, "lon": -87.747, "color": "#7b4fbf", "num": "#307", "city": "Providence, KY", "phase": 4, "install": "11/10/26", "mat": "Pending", "fix": "Pending", "status": "PENDING"}, {"lat": 37.782, "lon": -87.093, "color": "#7b4fbf", "num": "#374", "city": "Owensboro, KY", "phase": 4, "install": "11/11/26", "mat": "Pending", "fix": "Pending", "status": "PENDING"}, {"lat": 37.414, "lon": -86.896, "color": "#7b4fbf", "num": "#305TC", "city": "Beaver Dam, KY", "phase": 4, "install": "11/11/26", "mat": "Pending", "fix": "Pending", "status": "PENDING"}, {"lat": 37.762, "lon": -87.128, "color": "#7b4fbf", "num": "#372", "city": "Owensboro, KY", "phase": 4, "install": "11/12/26", "mat": "Pending", "fix": "Pending", "status": "PENDING"}, {"lat": 37.675, "lon": -87.927, "color": "#7b4fbf", "num": "#291", "city": "Morganfield, KY", "phase": 4, "install": "11/12/26", "mat": "Pending", "fix": "Pending", "status": "PENDING"}, {"lat": 37.928, "lon": -87.9, "color": "#7b4fbf", "num": "#362", "city": "Mt Vernon, IN", "phase": 4, "install": "11/13/26", "mat": "Pending", "fix": "Pending", "status": "PENDING"}, {"lat": 37.546, "lon": -87.984, "color": "#7b4fbf", "num": "#302", "city": "Sturgis, KY", "phase": 4, "install": "11/13/26", "mat": "Pending", "fix": "Pending", "status": "PENDING"}, {"lat": 40.994, "lon": -85.764, "color": "#7b4fbf", "num": "#312", "city": "N. Manchester, IN", "phase": 4, "install": "11/16/26", "mat": "Pending", "fix": "Pending", "status": "PENDING"}, {"lat": 38.048, "lon": -84.494, "color": "#7b4fbf", "num": "#319", "city": "Lexington, KY", "phase": 4, "install": "11/16/26", "mat": "Pending", "fix": "Pending", "status": "PENDING"}, {"lat": 40.489, "lon": -85.952, "color": "#7b4fbf", "num": "#293", "city": "Greentown, IN", "phase": 4, "install": "11/17/26", "mat": "Pending", "fix": "Pending", "status": "PENDING"}, {"lat": 38.028, "lon": -84.484, "color": "#7b4fbf", "num": "#322", "city": "Lexington, KY", "phase": 4, "install": "11/17/26", "mat": "Pending", "fix": "Pending", "status": "PENDING"}, {"lat": 38.176, "lon": -83.457, "color": "#7b4fbf", "num": "#404", "city": "Morehead, KY", "phase": 4, "install": "11/18/26", "mat": "Pending", "fix": "Pending", "status": "PENDING"}, {"lat": 39.3, "lon": -85.785, "color": "#7b4fbf", "num": "#301", "city": "Hope, IN", "phase": 4, "install": "11/19/26", "mat": "Pending", "fix": "Pending", "status": "PENDING"}, {"lat": 38.212, "lon": -85.234, "color": "#7b4fbf", "num": "#382", "city": "Shelbyville, KY", "phase": 4, "install": "11/19/26", "mat": "Pending", "fix": "Pending", "status": "PENDING"}, {"lat": 39.304, "lon": -85.227, "color": "#7b4fbf", "num": "#320", "city": "Batesville, IN", "phase": 4, "install": "11/20/26", "mat": "Pending", "fix": "Pending", "status": "PENDING"}, {"lat": 38.766, "lon": -85.808, "color": "#7b4fbf", "num": "#325", "city": "Austin, IN", "phase": 5, "install": "11/23/26", "mat": "Pending", "fix": "Pending", "status": "PENDING"}, {"lat": 37.776, "lon": -89.33, "color": "#7b4fbf", "num": "#204", "city": "Murphysboro, IL", "phase": 5, "install": "11/23/26", "mat": "Pending", "fix": "Pending", "status": "PENDING"}, {"lat": 38.265, "lon": -85.727, "color": "#7b4fbf", "num": "#398", "city": "Jeffersonville, IN", "phase": 5, "install": "11/24/26", "mat": "Pending", "fix": "Pending", "status": "PENDING"}, {"lat": 37.73, "lon": -88.526, "color": "#7b4fbf", "num": "#212", "city": "Harrisburg, IL", "phase": 5, "install": "11/24/26", "mat": "Pending", "fix": "Pending", "status": "PENDING"}, {"lat": 38.521, "lon": -89.113, "color": "#7b4fbf", "num": "#151", "city": "Centralia, IL", "phase": 5, "install": "11/25/26", "mat": "Pending", "fix": "Pending", "status": "PENDING"}, {"lat": 36.99, "lon": -86.464, "color": "#7b4fbf", "num": "#394", "city": "Bowling Green, KY", "phase": 5, "install": "12/07/26", "mat": "Pending", "fix": "Pending", "status": "PENDING"}, {"lat": 40.488, "lon": -89.009, "color": "#7b4fbf", "num": "#353", "city": "Bloomington, IL", "phase": 5, "install": "12/07/26", "mat": "Pending", "fix": "Pending", "status": "PENDING"}, {"lat": 37.702, "lon": -85.869, "color": "#7b4fbf", "num": "#405", "city": "Elizabethtown, KY", "phase": 5, "install": "12/07/26", "mat": "Pending", "fix": "Pending", "status": "PENDING"}, {"lat": 37.002, "lon": -86.449, "color": "#7b4fbf", "num": "#395", "city": "Bowling Green, KY", "phase": 5, "install": "12/08/26", "mat": "Pending", "fix": "Pending", "status": "PENDING"}, {"lat": 39.769, "lon": -89.65, "color": "#7b4fbf", "num": "#262", "city": "Springfield, IL", "phase": 5, "install": "12/08/26", "mat": "Pending", "fix": "Pending", "status": "PENDING"}, {"lat": 38.444, "lon": -85.665, "color": "#7b4fbf", "num": "#316", "city": "Charlestown, IN", "phase": 5, "install": "12/08/26", "mat": "Pending", "fix": "Pending", "status": "PENDING"}, {"lat": 37.324, "lon": -87.489, "color": "#7b4fbf", "num": "#364", "city": "Madisonville, KY", "phase": 5, "install": "12/09/26", "mat": "Pending", "fix": "Pending", "status": "PENDING"}, {"lat": 38.212, "lon": -85.209, "color": "#7b4fbf", "num": "#381", "city": "Shelbyville, KY", "phase": 5, "install": "12/09/26", "mat": "Pending", "fix": "Pending", "status": "PENDING"}, {"lat": 37.028, "lon": -87.464, "color": "#7b4fbf", "num": "#386", "city": "Crofton, KY", "phase": 5, "install": "12/10/26", "mat": "Pending", "fix": "Pending", "status": "PENDING"}, {"lat": 39.491, "lon": -88.393, "color": "#7b4fbf", "num": "#175", "city": "Mattoon, IL", "phase": 5, "install": "12/10/26", "mat": "Pending", "fix": "Pending", "status": "PENDING"}, {"lat": 38.234, "lon": -85.37, "color": "#7b4fbf", "num": "#380", "city": "Simpsonville, KY", "phase": 5, "install": "12/10/26", "mat": "Pending", "fix": "Pending", "status": "PENDING"}, {"lat": 37.92, "lon": -87.905, "color": "#7b4fbf", "num": "#284", "city": "Mt Vernon, IN", "phase": 5, "install": "12/11/26", "mat": "Pending", "fix": "Pending", "status": "PENDING"}, {"lat": 38.29, "lon": -86.96, "color": "#7b4fbf", "num": "#339", "city": "Huntingburg, IN", "phase": 5, "install": "12/14/26", "mat": "Pending", "fix": "Pending", "status": "PENDING"}, {"lat": 38.585, "lon": -89.99, "color": "#7b4fbf", "num": "#315", "city": "Fairview Hts, IL", "phase": 5, "install": "12/14/26", "mat": "Pending", "fix": "Pending", "status": "PENDING"}, {"lat": 38.661, "lon": -86.447, "color": "#7b4fbf", "num": "#280", "city": "Orleans, IN", "phase": 5, "install": "12/14/26", "mat": "Pending", "fix": "Pending", "status": "PENDING"}, {"lat": 38.395, "lon": -86.921, "color": "#7b4fbf", "num": "#350", "city": "Jasper, IN", "phase": 5, "install": "12/15/26", "mat": "Pending", "fix": "Pending", "status": "PENDING"}, {"lat": 38.644, "lon": -90.011, "color": "#7b4fbf", "num": "#326", "city": "Caseyville, IL", "phase": 5, "install": "12/15/26", "mat": "Pending", "fix": "Pending", "status": "PENDING"}, {"lat": 38.891, "lon": -86.022, "color": "#7b4fbf", "num": "#313", "city": "Brownstown, IN", "phase": 5, "install": "12/15/26", "mat": "Pending", "fix": "Pending", "status": "PENDING"}, {"lat": 38.379, "lon": -86.951, "color": "#7b4fbf", "num": "#286", "city": "Jasper, IN", "phase": 5, "install": "12/16/26", "mat": "Pending", "fix": "Pending", "status": "PENDING"}, {"lat": 38.951, "lon": -85.905, "color": "#7b4fbf", "num": "#311", "city": "Seymour, IN", "phase": 5, "install": "12/16/26", "mat": "Pending", "fix": "Pending", "status": "PENDING"}, {"lat": 38.545, "lon": -86.63, "color": "#7b4fbf", "num": "#289", "city": "French Lick, IN", "phase": 5, "install": "12/17/26", "mat": "Pending", "fix": "Pending", "status": "PENDING"}, {"lat": 37.017, "lon": -88.538, "color": "#7b4fbf", "num": "#365", "city": "Reidland, KY", "phase": 5, "install": "12/17/26", "mat": "Pending", "fix": "Pending", "status": "PENDING"}, {"lat": 39.936, "lon": -85.847, "color": "#7b4fbf", "num": "#298", "city": "Fortville, IN", "phase": 5, "install": "12/17/26", "mat": "Pending", "fix": "Pending", "status": "PENDING"}, {"lat": 38.564, "lon": -86.463, "color": "#7b4fbf", "num": "#304", "city": "Paoli, IN", "phase": 5, "install": "12/18/26", "mat": "Pending", "fix": "Pending", "status": "PENDING"}, {"lat": 36.012, "lon": -88.418, "color": "#7b4fbf", "num": "#385", "city": "Huntingdon, TN", "phase": 5, "install": "12/18/26", "mat": "Pending", "fix": "Pending", "status": "PENDING"}];
-data.forEach(function(d) {
-  L.circleMarker([d.lat, d.lon], { radius: 8, fillColor: d.color, color: '#fff', weight: 2, fillOpacity: 0.9 }).addTo(map).bindPopup(
-    '<div class="info-panel"><h3>Hucks ' + d.num + '</h3><div>' + d.city + '</div><div>Phase ' + d.phase + ' - Install: ' + d.install + '</div><div>Material: ' + d.mat + ' - Fixture: ' + d.fix + '</div><div style="margin-top:6px"><span style="display:inline-block;padding:2px 10px;border-radius:12px;background:' + d.color + ';color:#fff;font-weight:700;font-size:12px;">' + d.status + '</span></div></div>'
-  );
-});
-var legend = L.control({position: 'bottomleft'});
-legend.onAdd = function() {
-  var div = L.DomUtil.create('div', 'legend');
-  div.innerHTML = '<h4>Store Status</h4><div class="legend-item"><div class="legend-dot" style="background:#2e8b57"></div> Complete (21)</div><div class="legend-item"><div class="legend-dot" style="background:#e67e22"></div> In Progress (1)</div><div class="legend-item"><div class="legend-dot" style="background:#7b4fbf"></div> Pending</div><div class="legend-item"><div class="legend-dot" style="background:#d4a020"></div> Watch</div><div class="legend-item"><div class="legend-dot" style="background:#c84040"></div> At Risk</div><div style="margin-top:8px;font-size:11px;color:#888;">133 stores - Anderson - Sep 17, 2026</div>';
-  return div;
+const STORES = [
+  {n:"#391",c:"Lake Saint Louis, MO",p:1,i:"08/31/26",done:true,lat:38.787,lng:-90.78},
+  {n:"#264",c:"Florissant, MO",p:1,i:"08/31/26",done:true,lat:38.789,lng:-90.322},
+  {n:"#267",c:"O'Fallon, MO",p:1,i:"09/01/26",done:true,lat:38.81,lng:-90.7},
+  {n:"#296",c:"Alton, IL",p:1,i:"09/01/26",done:true,lat:38.89,lng:-90.184},
+  {n:"#222",c:"St Peters, MO",p:1,i:"09/02/26",done:true,lat:38.8,lng:-90.627},
+  {n:"#281",c:"Belleville, IL",p:1,i:"09/02/26",done:true,lat:38.52,lng:-89.984},
+  {n:"#237",c:"St Charles, MO",p:1,i:"09/03/26",done:true,lat:38.784,lng:-90.481},
+  {n:"#310",c:"Dupo, IL",p:1,i:"09/03/26",done:true,lat:38.516,lng:-90.211},
+  {n:"#366",c:"Herrin, IL",p:1,i:"09/08/26",done:true,lat:37.803,lng:-89.028},
+  {n:"#270",c:"Kirkwood, MO",p:1,i:"09/08/26",done:true,lat:38.583,lng:-90.407},
+  {n:"#343",c:"Waterloo, IL",p:1,i:"09/09/26",done:true,lat:38.336,lng:-90.15},
+  {n:"#239",c:"Herrin, IL",p:1,i:"09/09/26",done:true,lat:37.803,lng:-89.028},
+  {n:"#100",c:"Hannibal, MO",p:1,i:"09/10/26",done:true,lat:39.708,lng:-91.359},
+  {n:"#367",c:"Carterville, IL",p:1,i:"09/10/26",done:true,lat:37.76,lng:-89.077},
+  {n:"#351",c:"Salem, IL",p:1,i:"09/11/26",done:true,lat:38.627,lng:-88.946},
+  {n:"#161",c:"Marion, IL",p:1,i:"09/11/26",done:true,lat:37.73,lng:-88.933},
+  {n:"#134",c:"Mt Vernon, IL",p:1,i:"09/14/26",done:true,lat:38.317,lng:-88.903},
+  {n:"#344",c:"Carbondale, IL",p:1,i:"09/14/26",done:true,lat:37.727,lng:-89.217},
+  {n:"#259",c:"Mt Vernon, IL",p:1,i:"09/15/26",done:true,lat:38.317,lng:-88.903},
+  {n:"#379",c:"Marion, IL",p:1,i:"09/15/26",done:false,lat:37.73,lng:-88.933},
+  {n:"#51TC",c:"Mt Vernon, IL",p:1,i:"09/16/26",done:true,lat:38.317,lng:-88.903},
+  {n:"#247",c:"Marion, IL",p:1,i:"09/16/26",done:true,lat:37.73,lng:-88.933},
+  {n:"#349",c:"Mt Vernon, IL",p:1,i:"09/17/26",done:false,lat:38.317,lng:-88.903},
+  {n:"#388",c:"Marion, IL",p:1,i:"09/17/26",done:true,lat:37.73,lng:-88.933},
+  {n:"#371",c:"Mt Vernon, IL",p:1,i:"09/18/26",done:false,lat:38.317,lng:-88.903},
+  {n:"#177",c:"Harrisburg, IL",p:1,i:"09/18/26",done:true,lat:37.738,lng:-88.541},
+  {n:"#241",c:"Fairfield, IL",p:2,i:"09/22/26",done:false,lat:38.379,lng:-88.36},
+  {n:"#219",c:"Steeleville, IL",p:2,i:"09/22/26",done:false,lat:38.006,lng:-89.661},
+  {n:"#101",c:"Grayville, IL",p:2,i:"09/23/26",done:false,lat:38.258,lng:-87.994},
+  {n:"#114",c:"Christopher, IL",p:2,i:"09/23/26",done:false,lat:37.973,lng:-89.053},
+  {n:"#130",c:"Mcleansboro, IL",p:2,i:"09/24/26",done:false,lat:38.093,lng:-88.536},
+  {n:"#200",c:"Benton, IL",p:2,i:"09/24/26",done:false,lat:38.007,lng:-88.92},
+  {n:"#197",c:"Eldorado, IL",p:2,i:"09/25/26",done:false,lat:37.813,lng:-88.438},
+  {n:"#104",c:"W. Frankfort, IL",p:2,i:"09/25/26",done:false,lat:37.898,lng:-88.932},
+  {n:"#357",c:"Peoria, IL",p:2,i:"09/28/26",done:false,lat:40.694,lng:-89.589},
+  {n:"#111",c:"Metropolis, IL",p:2,i:"09/28/26",done:false,lat:37.151,lng:-88.732},
+  {n:"#249",c:"Peoria, IL",p:2,i:"09/29/26",done:false,lat:40.694,lng:-89.589},
+  {n:"#406",c:"Paducah, KY",p:2,i:"09/29/26",done:false,lat:37.084,lng:-88.6},
+  {n:"#260",c:"Peoria, IL",p:2,i:"09/30/26",done:false,lat:40.694,lng:-89.589},
+  {n:"#377",c:"Paducah, KY",p:2,i:"09/30/26",done:false,lat:37.084,lng:-88.6},
+  {n:"#358",c:"Peoria, IL",p:2,i:"10/01/26",done:false,lat:40.694,lng:-89.589},
+  {n:"#378",c:"Paducah, KY",p:2,i:"10/01/26",done:false,lat:37.084,lng:-88.6},
+  {n:"#188",c:"Eureka, IL",p:2,i:"10/02/26",done:false,lat:40.721,lng:-89.273},
+  {n:"#360",c:"Bloomington, IL",p:2,i:"10/05/26",done:false,lat:40.484,lng:-88.994},
+  {n:"#52TC",c:"Kuttawa, KY",p:3,i:"10/05/26",done:false,lat:37.06,lng:-88.113},
+  {n:"#355",c:"Bloomington, IL",p:3,i:"10/06/26",done:false,lat:40.484,lng:-88.994},
+  {n:"#401",c:"Mayfield, KY",p:3,i:"10/06/26",done:false,lat:36.741,lng:-88.637},
+  {n:"#186",c:"Heyworth, IL",p:3,i:"10/07/26",done:false,lat:40.313,lng:-88.974},
+  {n:"#376",c:"Murray, KY",p:3,i:"10/07/26",done:false,lat:36.61,lng:-88.315},
+  {n:"#54",c:"Farmers City, IL",p:3,i:"10/08/26",done:false,lat:40.243,lng:-88.642},
+  {n:"#393",c:"Murray, KY",p:3,i:"10/08/26",done:false,lat:36.61,lng:-88.315},
+  {n:"#287",c:"Decatur, IL",p:3,i:"10/12/26",done:false,lat:39.84,lng:-88.955},
+  {n:"#271",c:"Cape Girardeau, MO",p:3,i:"10/12/26",done:false,lat:37.306,lng:-89.519},
+  {n:"#173",c:"Mt Zion, IL",p:3,i:"10/13/26",done:false,lat:39.773,lng:-88.874},
+  {n:"#407",c:"Charleston, IL",p:3,i:"10/14/26",done:false,lat:39.496,lng:-88.176},
+  {n:"#265",c:"Poplar Bluff, MO",p:3,i:"10/14/26",done:false,lat:36.757,lng:-90.393},
+  {n:"#250",c:"Charleston, IL",p:3,i:"10/15/26",done:false,lat:39.496,lng:-88.176},
+  {n:"#321",c:"Kennett, MO",p:3,i:"10/15/26",done:false,lat:36.236,lng:-90.056},
+  {n:"#338",c:"Vincennes, IN",p:3,i:"10/19/26",done:false,lat:38.677,lng:-87.529},
+  {n:"#300",c:"Jackson, TN",p:3,i:"10/19/26",done:false,lat:35.614,lng:-88.814},
+  {n:"#135",c:"Vincennes, IN",p:3,i:"10/20/26",done:false,lat:38.677,lng:-87.529},
+  {n:"#303",c:"Jackson, TN",p:3,i:"10/20/26",done:false,lat:35.614,lng:-88.814},
+  {n:"#290",c:"Vincennes, IN",p:3,i:"10/21/26",done:false,lat:38.677,lng:-87.529},
+  {n:"#105",c:"Martin, TN",p:3,i:"10/21/26",done:false,lat:36.343,lng:-88.85},
+  {n:"#210",c:"Robinson, IL",p:3,i:"10/22/26",done:false,lat:39.005,lng:-87.739},
+  {n:"#308",c:"Union City, TN",p:3,i:"10/22/26",done:false,lat:36.424,lng:-89.057},
+  {n:"#103",c:"Flora, IL",p:3,i:"10/23/26",done:false,lat:38.669,lng:-88.486},
+  {n:"#277",c:"Bloomfield, IN",p:3,i:"10/26/26",done:false,lat:39.027,lng:-86.937},
+  {n:"#392",c:"Dickson, TN",p:3,i:"10/26/26",done:false,lat:36.077,lng:-87.388},
+  {n:"#314",c:"Washington, IN",p:3,i:"10/27/26",done:false,lat:38.659,lng:-87.173},
+  {n:"#323",c:"Fort Branch, IN",p:4,i:"10/28/26",done:false,lat:38.251,lng:-87.581},
+  {n:"#139",c:"Sikeston, MO",p:4,i:"10/28/26",done:false,lat:36.877,lng:-89.588},
+  {n:"#408",c:"Princeton, IN",p:4,i:"10/29/26",done:false,lat:38.355,lng:-87.568},
+  {n:"#133",c:"Bardwell, KY",p:4,i:"10/29/26",done:false,lat:36.87,lng:-89.01},
+  {n:"#285",c:"Petersburg, IN",p:4,i:"10/30/26",done:false,lat:38.492,lng:-87.279},
+  {n:"#402",c:"Evansville, IN",p:4,i:"11/02/26",done:false,lat:37.972,lng:-87.571},
+  {n:"#403",c:"Hopkinsville, KY",p:4,i:"11/02/26",done:false,lat:36.866,lng:-87.489},
+  {n:"#399",c:"Evansville, IN",p:4,i:"11/03/26",done:false,lat:37.972,lng:-87.571},
+  {n:"#309",c:"Hopkinsville, KY",p:4,i:"11/03/26",done:false,lat:36.866,lng:-87.489},
+  {n:"#383",c:"Evansville, IN",p:4,i:"11/04/26",done:false,lat:37.972,lng:-87.571},
+  {n:"#384",c:"Hopkinsville, KY",p:4,i:"11/04/26",done:false,lat:36.866,lng:-87.489},
+  {n:"#324",c:"Evansville, IN",p:4,i:"11/05/26",done:false,lat:37.972,lng:-87.571},
+  {n:"#396",c:"Bowling Green, KY",p:4,i:"11/05/26",done:false,lat:36.99,lng:-86.444},
+  {n:"#283",c:"Chandler, IN",p:4,i:"11/06/26",done:false,lat:38.042,lng:-87.368},
+  {n:"#397",c:"Bowling Green, KY",p:4,i:"11/06/26",done:false,lat:36.99,lng:-86.444},
+  {n:"#337",c:"Evansville, IN",p:4,i:"11/09/26",done:false,lat:37.972,lng:-87.571},
+  {n:"#368",c:"Madisonville, KY",p:4,i:"11/09/26",done:false,lat:37.328,lng:-87.499},
+  {n:"#272",c:"Newburgh, IN",p:4,i:"11/10/26",done:false,lat:37.944,lng:-87.405},
+  {n:"#307",c:"Providence, KY",p:4,i:"11/10/26",done:false,lat:37.397,lng:-87.762},
+  {n:"#374",c:"Owensboro, KY",p:4,i:"11/11/26",done:false,lat:37.774,lng:-87.113},
+  {n:"#305TC",c:"Beaver Dam, KY",p:4,i:"11/11/26",done:false,lat:37.402,lng:-86.876},
+  {n:"#372",c:"Owensboro, KY",p:4,i:"11/12/26",done:false,lat:37.774,lng:-87.113},
+  {n:"#291",c:"Morganfield, KY",p:4,i:"11/12/26",done:false,lat:37.683,lng:-87.917},
+  {n:"#362",c:"Mt Vernon, IN",p:4,i:"11/13/26",done:false,lat:37.932,lng:-87.895},
+  {n:"#302",c:"Sturgis, KY",p:4,i:"11/13/26",done:false,lat:37.546,lng:-87.984},
+  {n:"#312",c:"N. Manchester, IN",p:4,i:"11/16/26",done:false,lat:40.99,lng:-85.769},
+  {n:"#319",c:"Lexington, KY",p:4,i:"11/16/26",done:false,lat:38.04,lng:-84.504},
+  {n:"#293",c:"Greentown, IN",p:4,i:"11/17/26",done:false,lat:40.477,lng:-85.967},
+  {n:"#322",c:"Lexington, KY",p:4,i:"11/17/26",done:false,lat:38.04,lng:-84.504},
+  {n:"#404",c:"Morehead, KY",p:4,i:"11/18/26",done:false,lat:38.184,lng:-83.437},
+  {n:"#301",c:"Hope, IN",p:4,i:"11/19/26",done:false,lat:39.304,lng:-85.77},
+  {n:"#382",c:"Shelbyville, KY",p:4,i:"11/19/26",done:false,lat:38.212,lng:-85.224},
+  {n:"#320",c:"Batesville, IN",p:4,i:"11/20/26",done:false,lat:39.3,lng:-85.222},
+  {n:"#325",c:"Austin, IN",p:5,i:"11/23/26",done:false,lat:38.758,lng:-85.808},
+  {n:"#204",c:"Murphysboro, IL",p:5,i:"11/23/26",done:false,lat:37.764,lng:-89.335},
+  {n:"#398",c:"Jeffersonville, IN",p:5,i:"11/24/26",done:false,lat:38.277,lng:-85.737},
+  {n:"#212",c:"Harrisburg, IL",p:5,i:"11/24/26",done:false,lat:37.738,lng:-88.541},
+  {n:"#151",c:"Centralia, IL",p:5,i:"11/25/26",done:false,lat:38.525,lng:-89.133},
+  {n:"#394",c:"Bowling Green, KY",p:5,i:"12/07/26",done:false,lat:36.99,lng:-86.444},
+  {n:"#353",c:"Bloomington, IL",p:5,i:"12/07/26",done:false,lat:40.484,lng:-88.994},
+  {n:"#405",c:"Elizabethtown, KY",p:5,i:"12/07/26",done:false,lat:37.694,lng:-85.859},
+  {n:"#395",c:"Bowling Green, KY",p:5,i:"12/08/26",done:false,lat:36.99,lng:-86.444},
+  {n:"#262",c:"Springfield, IL",p:5,i:"12/08/26",done:false,lat:39.781,lng:-89.65},
+  {n:"#316",c:"Charlestown, IN",p:5,i:"12/08/26",done:false,lat:38.452,lng:-85.67},
+  {n:"#364",c:"Madisonville, KY",p:5,i:"12/09/26",done:false,lat:37.328,lng:-87.499},
+  {n:"#381",c:"Shelbyville, KY",p:5,i:"12/09/26",done:false,lat:38.212,lng:-85.224},
+  {n:"#386",c:"Crofton, KY",p:5,i:"12/09/26",done:false,lat:37.024,lng:-87.484},
+  {n:"#175",c:"Mattoon, IL",p:5,i:"12/10/26",done:false,lat:39.483,lng:-88.373},
+  {n:"#380",c:"Simpsonville, KY",p:5,i:"12/10/26",done:false,lat:38.222,lng:-85.355},
+  {n:"#284",c:"Mt Vernon, IN",p:5,i:"12/11/26",done:false,lat:37.932,lng:-87.895},
+  {n:"#339",c:"Huntingburg, IN",p:5,i:"12/14/26",done:false,lat:38.298,lng:-86.955},
+  {n:"#315",c:"Fairview Hts, IL",p:5,i:"12/14/26",done:false,lat:38.589,lng:-89.99},
+  {n:"#280",c:"Orleans, IN",p:5,i:"12/14/26",done:false,lat:38.661,lng:-86.452},
+  {n:"#350",c:"Jasper, IN",p:5,i:"12/15/26",done:false,lat:38.391,lng:-86.931},
+  {n:"#326",c:"Caseyville, IL",p:5,i:"12/15/26",done:false,lat:38.636,lng:-90.026},
+  {n:"#313",c:"Brownstown, IN",p:5,i:"12/15/26",done:false,lat:38.879,lng:-86.042},
+  {n:"#286",c:"Jasper, IN",p:5,i:"12/16/26",done:false,lat:38.391,lng:-86.931},
+  {n:"#311",c:"Seymour, IN",p:5,i:"12/16/26",done:false,lat:38.959,lng:-85.89},
+  {n:"#289",c:"French Lick, IN",p:5,i:"12/17/26",done:false,lat:38.549,lng:-86.62},
+  {n:"#365",c:"Reidland, KY",p:5,i:"12/17/26",done:false,lat:37.017,lng:-88.533},
+  {n:"#298",c:"Fortville, IN",p:5,i:"12/17/26",done:false,lat:39.932,lng:-85.847},
+  {n:"#304",c:"Paoli, IN",p:5,i:"12/18/26",done:false,lat:38.556,lng:-86.468},
+  {n:"#385",c:"Huntingdon, TN",p:5,i:"12/18/26",done:false,lat:36,-88.428}
+];
+
+const COLORS = {
+  complete: '#2e8b57',
+  ready: '#17a2b8',
+  pending: '#7b4fbf',
+  watch: '#b8860b',
+  atrisk: '#c84040'
 };
-legend.addTo(map);
+
+const PHASE_COLORS = {
+  1: '#388bfd',
+  2: '#a371f7',
+  3: '#f0883e',
+  4: '#3fb950',
+  5: '#f778ba'
+};
+
+let map, markers = [], activePhase = 0;
+
+function init() {
+  map = L.map('map', { zoomControl: true }).setView([38.5, -88.0], 6);
+  L.tileLayer('https://tile.openstreetmap.de/{z}/{x}/{y}.png', {
+    maxZoom: 18,
+    attribution: '&copy; OpenStreetMap contributors'
+  }).addTo(map);
+
+  STORES.forEach(s => {
+    const color = s.done ? COLORS.complete : COLORS.pending;
+    const radius = s.done ? 8 : 6;
+    const marker = L.circleMarker([s.lat, s.lng], {
+      radius: radius,
+      fillColor: color,
+      color: '#fff',
+      weight: 1.5,
+      opacity: 1,
+      fillOpacity: 0.9
+    }).addTo(map);
+
+    const statusLabel = s.done ? 'Complete' : 'Scheduled';
+    const statusClass = s.done ? 'complete' : 'pending';
+    marker.bindPopup(
+      '<div class="store-popup">' +
+        '<h3>Huck\'s ' + s.n + '</h3>' +
+        '<div class="meta">' + s.c + '</div>' +
+        '<div class="meta">Phase ' + s.p + ' &middot; Install: ' + s.i + '</div>' +
+        '<span class="status-badge ' + statusClass + '">' + statusLabel + '</span>' +
+      '</div>'
+    );
+
+    marker._storeData = s;
+    markers.push(marker);
+  });
+}
+
+function filterPhase(phase) {
+  activePhase = phase;
+  document.querySelectorAll('.phase-btn').forEach((btn, idx) => {
+    btn.classList.toggle('active', idx === phase);
+  });
+
+  let completeCount = 0, remainingCount = 0;
+  markers.forEach(m => {
+    const s = m._storeData;
+    const show = phase === 0 || s.p === phase;
+    if (show) {
+      m.setStyle({ opacity: 1, fillOpacity: 0.9 });
+      m.setRadius(s.done ? 8 : 6);
+      if (s.done) completeCount++; else remainingCount++;
+    } else {
+      m.setStyle({ opacity: 0.15, fillOpacity: 0.15 });
+      m.setRadius(4);
+    }
+  });
+
+  document.getElementById('complete-count').textContent = completeCount;
+  document.getElementById('remaining-count').textContent = remainingCount;
+}
+
+init();
 </script>
 </body>
 </html>
