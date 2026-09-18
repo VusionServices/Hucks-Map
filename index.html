@@ -78,7 +78,7 @@
 <div id="map"></div>
 
 <script>
-const STORES = [
+var STORES = [
   {n:"#391",c:"Lake Saint Louis, MO",p:1,i:"08/31/26",done:true,lat:38.787,lng:-90.78},
   {n:"#264",c:"Florissant, MO",p:1,i:"08/31/26",done:true,lat:38.789,lng:-90.322},
   {n:"#267",c:"O'Fallon, MO",p:1,i:"09/01/26",done:true,lat:38.81,lng:-90.7},
@@ -211,10 +211,10 @@ const STORES = [
   {n:"#365",c:"Reidland, KY",p:5,i:"12/17/26",done:false,lat:37.017,lng:-88.533},
   {n:"#298",c:"Fortville, IN",p:5,i:"12/17/26",done:false,lat:39.932,lng:-85.847},
   {n:"#304",c:"Paoli, IN",p:5,i:"12/18/26",done:false,lat:38.556,lng:-86.468},
-  {n:"#385",c:"Huntingdon, TN",p:5,i:"12/18/26",done:false,lat:36,-88.428}
+  {n:"#385",c:"Huntingdon, TN",p:5,i:"12/18/26",done:false,lat:36,lng:-88.428}
 ];
 
-const COLORS = {
+var COLORS = {
   complete: '#2e8b57',
   ready: '#17a2b8',
   pending: '#7b4fbf',
@@ -222,15 +222,7 @@ const COLORS = {
   atrisk: '#c84040'
 };
 
-const PHASE_COLORS = {
-  1: '#388bfd',
-  2: '#a371f7',
-  3: '#f0883e',
-  4: '#3fb950',
-  5: '#f778ba'
-};
-
-let map, markers = [], activePhase = 0;
+var map, markers = [], activePhase = 0;
 
 function init() {
   map = L.map('map', { zoomControl: true }).setView([38.5, -88.0], 6);
@@ -239,10 +231,10 @@ function init() {
     attribution: '&copy; OpenStreetMap contributors'
   }).addTo(map);
 
-  STORES.forEach(s => {
-    const color = s.done ? COLORS.complete : COLORS.pending;
-    const radius = s.done ? 8 : 6;
-    const marker = L.circleMarker([s.lat, s.lng], {
+  STORES.forEach(function(s) {
+    var color = s.done ? COLORS.complete : COLORS.pending;
+    var radius = s.done ? 8 : 6;
+    var marker = L.circleMarker([s.lat, s.lng], {
       radius: radius,
       fillColor: color,
       color: '#fff',
@@ -251,8 +243,8 @@ function init() {
       fillOpacity: 0.9
     }).addTo(map);
 
-    const statusLabel = s.done ? 'Complete' : 'Scheduled';
-    const statusClass = s.done ? 'complete' : 'pending';
+    var statusLabel = s.done ? 'Complete' : 'Scheduled';
+    var statusClass = s.done ? 'complete' : 'pending';
     marker.bindPopup(
       '<div class="store-popup">' +
         '<h3>Huck\'s ' + s.n + '</h3>' +
@@ -269,14 +261,16 @@ function init() {
 
 function filterPhase(phase) {
   activePhase = phase;
-  document.querySelectorAll('.phase-btn').forEach((btn, idx) => {
-    btn.classList.toggle('active', idx === phase);
-  });
+  var btns = document.querySelectorAll('.phase-btn');
+  for (var j = 0; j < btns.length; j++) {
+    if (j === phase) btns[j].classList.add('active');
+    else btns[j].classList.remove('active');
+  }
 
-  let completeCount = 0, remainingCount = 0;
-  markers.forEach(m => {
-    const s = m._storeData;
-    const show = phase === 0 || s.p === phase;
+  var completeCount = 0, remainingCount = 0;
+  markers.forEach(function(m) {
+    var s = m._storeData;
+    var show = phase === 0 || s.p === phase;
     if (show) {
       m.setStyle({ opacity: 1, fillOpacity: 0.9 });
       m.setRadius(s.done ? 8 : 6);
