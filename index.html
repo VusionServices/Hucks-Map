@@ -41,17 +41,17 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
     <h1><span class="vusion">VUSION</span><span class="title">133 Store Rollout</span></h1>
   </div>
   <input type="text" class="search-box" id="search" placeholder="Search store or city...">
-  <button class="status-btn active" id="btn-complete" style="border-color:#16a34a;background:#16a34a;color:#fff" onclick="toggleStatus('complete')">Complete (34)</button>
-  <button class="status-btn active" id="btn-ready" style="border-color:#f97316;background:#f97316;color:#fff" onclick="toggleStatus('ready')">Ready (4)</button>
-  <button class="status-btn active" id="btn-shipped" style="border-color:#3b82f6;background:#3b82f6;color:#fff" onclick="toggleStatus('shipped')">Shipped (26)</button>
-  <button class="status-btn active" id="btn-pending" style="border-color:#8b5cf6;background:#8b5cf6;color:#fff" onclick="toggleStatus('pending')">Pending (69)</button>
+  <button class="status-btn active" id="btn-complete" style="border-color:#16a34a;background:#16a34a;color:#fff" onclick="toggleStatus('complete')">Complete (35)</button>
+  <button class="status-btn active" id="btn-ready" style="border-color:#f97316;background:#f97316;color:#fff" onclick="toggleStatus('ready')">Ready (3)</button>
+  <button class="status-btn active" id="btn-shipped" style="border-color:#3b82f6;background:#3b82f6;color:#fff" onclick="toggleStatus('shipped')">Shipped (29)</button>
+  <button class="status-btn active" id="btn-pending" style="border-color:#8b5cf6;background:#8b5cf6;color:#fff" onclick="toggleStatus('pending')">Pending (66)</button>
   <button class="phase-btn active" id="ph-all" onclick="filterPhase(0)">All</button>
   <button class="phase-btn" id="ph-1" onclick="filterPhase(1)">P1</button>
   <button class="phase-btn" id="ph-2" onclick="filterPhase(2)">P2</button>
   <button class="phase-btn" id="ph-3" onclick="filterPhase(3)">P3</button>
   <button class="phase-btn" id="ph-4" onclick="filterPhase(4)">P4</button>
   <button class="phase-btn" id="ph-5" onclick="filterPhase(5)">P5</button>
-  <span class="date-label">Updated Sep 28, 2026</span>
+  <span class="date-label">Updated Sep 29, 2026</span>
 </div>
 <script>
 var map=L.map('map',{zoomControl:true}).setView([38.5,-89.5],7);
@@ -63,7 +63,7 @@ var legend=L.control({position:'bottomleft'});
 legend.onAdd=function(){
   var d=L.DomUtil.create('div');
   d.style.cssText='background:rgba(255,255,255,0.95);padding:10px 14px;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.2);font-family:inherit;';
-  d.innerHTML='<div style="font-weight:700;font-size:13px;margin-bottom:6px">Store Status</div><div style="display:flex;align-items:center;gap:6px;margin:3px 0"><span style="width:14px;height:14px;border-radius:50%;background:#16a34a;display:inline-block;border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,0.3)"></span><span style="font-size:13px">Complete (34)</span></div><div style="display:flex;align-items:center;gap:6px;margin:3px 0"><span style="width:14px;height:14px;border-radius:50%;background:#f97316;display:inline-block;border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,0.3)"></span><span style="font-size:13px">Ready / Delivered (4)</span></div><div style="display:flex;align-items:center;gap:6px;margin:3px 0"><span style="width:14px;height:14px;border-radius:50%;background:#3b82f6;display:inline-block;border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,0.3)"></span><span style="font-size:13px">Shipped (26)</span></div><div style="display:flex;align-items:center;gap:6px;margin:3px 0"><span style="width:14px;height:14px;border-radius:50%;background:#8b5cf6;display:inline-block;border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,0.3)"></span><span style="font-size:13px">Pending (69)</span></div><div style="margin-top:6px;font-size:11px;color:#666">133 total stores</div>';
+  d.innerHTML='<div style="font-weight:700;font-size:13px;margin-bottom:6px">Store Status</div><div style="display:flex;align-items:center;gap:6px;margin:3px 0"><span style="width:14px;height:14px;border-radius:50%;background:#16a34a;display:inline-block;border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,0.3)"></span><span style="font-size:13px">Complete (35)</span></div><div style="display:flex;align-items:center;gap:6px;margin:3px 0"><span style="width:14px;height:14px;border-radius:50%;background:#f97316;display:inline-block;border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,0.3)"></span><span style="font-size:13px">Ready / Delivered (3)</span></div><div style="display:flex;align-items:center;gap:6px;margin:3px 0"><span style="width:14px;height:14px;border-radius:50%;background:#3b82f6;display:inline-block;border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,0.3)"></span><span style="font-size:13px">Shipped (29)</span></div><div style="display:flex;align-items:center;gap:6px;margin:3px 0"><span style="width:14px;height:14px;border-radius:50%;background:#8b5cf6;display:inline-block;border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,0.3)"></span><span style="font-size:13px">Pending (66)</span></div><div style="margin-top:6px;font-size:11px;color:#666">133 total stores</div>';
   return d;
 };
 legend.addTo(map);
@@ -122,7 +122,7 @@ addStore('#130',38.093,-88.536,'#16a34a','complete',1,'<b>#130</b><br>Mcleansbor
 addStore('#200',38.007,-88.92,'#16a34a','complete',1,'<b>#200</b><br>Benton, IL<br>Phase 1<br>Install: 09/24/26<br>Lead: Michael<br>Material: Delivered<br>Fixtures: Delivered<br>Tags: 1,722');
 addStore('#197',37.813,-88.438,'#16a34a','complete',1,'<b>#197</b><br>Eldorado, IL<br>Phase 1<br>Install: 09/25/26<br>Lead: Billy<br>Material: Delivered<br>Fixtures: Delivered<br>Tags: 1,681');
 addStore('#104',37.898,-88.932,'#16a34a','complete',1,'<b>#104</b><br>W. Frankfort, IL<br>Phase 1<br>Install: 09/25/26<br>Lead: Michael<br>Material: Delivered<br>Fixtures: Delivered<br>Tags: 1,026');
-addStore('#357',40.694,-89.581,'#f97316','ready',2,'<b>#357</b><br>Peoria, IL<br>Phase 2<br>Install: 09/28/26<br>Lead: Billy<br>Material: Delivered<br>Fixtures: Delivered');
+addStore('#357',40.694,-89.581,'#16a34a','complete',2,'<b>#357</b><br>Peoria, IL<br>Phase 2<br>Install: 09/28/26<br>Lead: Billy<br>Material: Delivered<br>Fixtures: Delivered<br>Tags: 1,922');
 addStore('#111',37.151,-88.732,'#f97316','ready',2,'<b>#111</b><br>Metropolis, IL<br>Phase 2<br>Install: 09/28/26<br>Lead: Michael<br>Material: Delivered<br>Fixtures: Delivered');
 addStore('#249',40.702,-89.589,'#f97316','ready',2,'<b>#249</b><br>Peoria, IL<br>Phase 2<br>Install: 09/29/26<br>Lead: Billy<br>Material: Delivered<br>Fixtures: Delivered');
 addStore('#406',37.084,-88.592,'#f97316','ready',2,'<b>#406</b><br>Paducah, KY<br>Phase 2<br>Install: 09/29/26<br>Lead: Michael<br>Material: Delivered<br>Fixtures: Delivered');
@@ -152,9 +152,9 @@ addStore('#135',38.68393,-87.533,'#3b82f6','shipped',2,'<b>#135</b><br>Vincennes
 addStore('#303',35.614,-88.822,'#3b82f6','shipped',2,'<b>#303</b><br>Jackson, TN<br>Phase 2<br>Install: 10/20/26<br>Lead: Michael<br>Material: Delivered<br>Fixtures: Shipped');
 addStore('#290',38.67007,-87.533,'#3b82f6','shipped',2,'<b>#290</b><br>Vincennes, IN<br>Phase 2<br>Install: 10/21/26<br>Lead: Billy<br>Material: Delivered<br>Fixtures: Shipped');
 addStore('#105',36.343,-88.85,'#3b82f6','shipped',2,'<b>#105</b><br>Martin, TN<br>Phase 2<br>Install: 10/21/26<br>Lead: Michael<br>Material: Delivered<br>Fixtures: Shipped');
-addStore('#210',39.005,-87.739,'#8b5cf6','pending',2,'<b>#210</b><br>Robinson, IL<br>Phase 2<br>Install: 10/22/26<br>Lead: Billy<br>Material: Planned<br>Fixtures: ');
-addStore('#308',36.424,-89.057,'#8b5cf6','pending',2,'<b>#308</b><br>Union City, TN<br>Phase 2<br>Install: 10/22/26<br>Lead: Michael<br>Material: Planned<br>Fixtures: ');
-addStore('#103',38.669,-88.486,'#8b5cf6','pending',2,'<b>#103</b><br>Flora, IL<br>Phase 2<br>Install: 10/23/26<br>Lead: Billy<br>Material: Planned<br>Fixtures: ');
+addStore('#210',39.005,-87.739,'#3b82f6','shipped',2,'<b>#210</b><br>Robinson, IL<br>Phase 2<br>Install: 10/22/26<br>Lead: Billy<br>Material: Delivered<br>Fixtures: Shipped');
+addStore('#308',36.424,-89.057,'#3b82f6','shipped',2,'<b>#308</b><br>Union City, TN<br>Phase 2<br>Install: 10/22/26<br>Lead: Michael<br>Material: Delivered<br>Fixtures: Shipped');
+addStore('#103',38.669,-88.486,'#3b82f6','shipped',2,'<b>#103</b><br>Flora, IL<br>Phase 2<br>Install: 10/23/26<br>Lead: Billy<br>Material: Delivered<br>Fixtures: Shipped');
 addStore('#277',39.027,-86.937,'#8b5cf6','pending',3,'<b>#277</b><br>Bloomfield, IN<br>Phase 3<br>Install: 10/26/26<br>Lead: Billy<br>Material: <br>Fixtures: ');
 addStore('#392',36.077,-87.388,'#8b5cf6','pending',3,'<b>#392</b><br>Dickson, TN<br>Phase 3<br>Install: 10/26/26<br>Lead: Michael<br>Material: <br>Fixtures: ');
 addStore('#314',38.659,-87.173,'#8b5cf6','pending',3,'<b>#314</b><br>Washington, IN<br>Phase 3<br>Install: 10/27/26<br>Lead: Billy<br>Material: <br>Fixtures: ');
